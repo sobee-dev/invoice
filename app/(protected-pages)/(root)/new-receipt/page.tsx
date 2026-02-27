@@ -6,12 +6,32 @@ import type { DraftItem, ReceiptDraft, Business } from "@/lib/types";
 import { calculateReceiptTotals } from "@/lib/types";
 import { getBusiness } from "@/lib/repositories/businessRepo";
 import { getNextReceiptNumber, saveReceipt } from "@/lib/repositories/receiptRepo";
+import { useSync } from "@/lib/syncToServer";
+
+
+
 
 export default function NewReceiptPage() {
   const router = useRouter();
   const [business, setBusiness] = useState<Business | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const { syncOutbox } = useSync();
+  const [isOnline, setIsOnline] = useState(true);
+  
+  
+  useEffect(() => {
+    setIsOnline(navigator.onLine);
+    const goOnline = () => setIsOnline(true);
+    const goOffline = () => setIsOnline(false);
+    window.addEventListener('online', goOnline);
+    window.addEventListener('offline', goOffline);
+    return () => {
+      window.removeEventListener('online', goOnline);
+      window.removeEventListener('offline', goOffline);
+    };
+  }, []);
+
 
   const [draft, setDraft] = useState<ReceiptDraft>({
     customerName: "",
@@ -22,7 +42,7 @@ export default function NewReceiptPage() {
     notes: "",
     items: [],
     taxEnabled: false,
-    taxRate: 0.1,
+    taxRate: 0.07,
     discount: 0,
   });
 
@@ -133,6 +153,11 @@ export default function NewReceiptPage() {
     setSaving(true);
     try {
       const receipt = await saveReceipt(draft);
+      sessionStorage.removeItem("receiptDraft");
+      if (navigator.onLine) {
+        // We don't 'await' this so the user isn't stuck waiting on the network
+        syncOutbox().catch(err => console.error("Background sync failed:", err));
+      }
       router.push(`/preview/${receipt.id}`);
     } catch (error) {
       console.error("Failed to save receipt:", error);
@@ -141,6 +166,8 @@ export default function NewReceiptPage() {
       setSaving(false);
     }
   };
+
+  
 
   const handlePreview = () => {
     if (draft.items.length === 0) {
@@ -414,6 +441,7 @@ export default function NewReceiptPage() {
                   {formatCurrency(taxAmount)}
                 </span>
               </div>
+
               <div className="border-t border-dashed border-slate-300 dark:border-slate-700 my-2" />
               <div className="flex items-center justify-between">
                 <span className="text-lg font-bold text-slate-900 dark:text-white">

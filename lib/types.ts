@@ -1,8 +1,18 @@
 // Domain types for the receipt generator app
 
 export type SyncStatus = 'pending' | 'synced' | 'error' | 'deleted';
-export type EntityType = 'business' | 'receipts' | 'receiptItem';
+export type EntityType = 'users' | 'business' | 'receipts' | 'receiptItem';
 export type OperationType = 'create' | 'update' | 'delete';
+export type SignatureType =  "none" | "text" | "image";
+
+export interface IUser {
+  id: string;
+  email: string;
+  business: Business;
+  
+  
+}
+
 
 export interface Business {
   id: string;
@@ -13,7 +23,7 @@ export interface Business {
   phone: string;
   email: string;
   registrationNumber?: string;
-  logo?: string; // base64 or URL
+  logoUrl?: string; // base64 or URL
   currency: string;
   taxRate: number; // e.g., 0.10 for 10%
   taxEnabled: boolean;
@@ -22,7 +32,11 @@ export interface Business {
   createdAt: string;
   updatedAt: string;
   motto?: string;
-  signature: string;
+  brandColorOne: string;
+  brandColorTwo: string
+  signatureUrl: string;
+  signatureType: SignatureType;
+  signatureText: string;
   serverId?: number;
   syncStatus: SyncStatus;
 

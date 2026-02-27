@@ -64,8 +64,9 @@ export default function PreviewPage({ params }: { params: Promise<{ id: string }
           grandTotal,
           notes: draft.notes || undefined,
           syncStatus: "pending",
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
+          createdAt: Date.now().toString(),
+          updatedAt: Date.now().toString(),
+          isPaid: true
         };
 
         const previewItems: ReceiptItem[] = draft.items.map((item: DraftItem) => ({

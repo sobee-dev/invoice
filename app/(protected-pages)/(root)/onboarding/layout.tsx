@@ -24,8 +24,7 @@ export default function OnboardingLayout({children,}: {children: React.ReactNode
             {STEPS.map((step, index) => (
               <div key={step.path} className="flex items-center">
                 <div
-                  className={`
-                    w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold
                     ${
                       index <= currentStepIndex
                         ? "bg-blue-600 text-white"
@@ -48,7 +47,7 @@ export default function OnboardingLayout({children,}: {children: React.ReactNode
                   <div
                     className={`w-8 sm:w-16 h-0.5 mx-2 ${
                       index < currentStepIndex
-                        ? "bg-blue-600"
+                        ? "bg-primary"
                         : "bg-slate-200 dark:bg-slate-700"
                     }`}
                   />

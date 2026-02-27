@@ -3,12 +3,15 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { TEMPLATES } from "@/lib/db";
+import api from "@/lib/axios";
+import { useDashboardData } from "@/context/DashboardContext";
 
 export default function OnboardingTemplateSelection() {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<string>("");
   const [error, setError] = useState('');
+  const { refreshData } = useDashboardData();
 
 
   const handleSubmit = async () => {
@@ -33,27 +36,14 @@ export default function OnboardingTemplateSelection() {
       };
 
       // ✅ Post to Django
-      const response = await fetch('http://localhost:8000/api/business/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          // Add auth if needed: 'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(completeData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to save');
-      }
-
-      const business = await response.json();
-      
-      // ✅ Clear localStorage
+      await api.post("/api/business/me/", completeData)
+            
+      await refreshData();
+      // // ✅ Clear localStorage
       localStorage.removeItem('onboarding-business');
-      
+      // await performInitialSync(data)
       // ✅ Redirect to dashboard
-      router.push('/dashboard');
+      window.location.href = "/dashboard";
 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');

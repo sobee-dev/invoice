@@ -1,5 +1,5 @@
 import Dexie, { type EntityTable } from 'dexie';
-import type {Business,Receipt,ReceiptItem,OutboxOperation,SyncState,} from './types';
+import type {Business,Receipt,ReceiptItem,OutboxOperation,SyncState, IUser,} from './types';
 
 // Define the database
 const db = new Dexie('InvoiceAppDB') as Dexie & {
@@ -8,15 +8,17 @@ const db = new Dexie('InvoiceAppDB') as Dexie & {
   receiptItems: EntityTable<ReceiptItem, 'id'>;
   outbox: EntityTable<OutboxOperation, 'id'>;
   syncState: EntityTable<SyncState, 'id'>;
+  users: EntityTable<IUser, 'id'>;
 };
 
 // Schema
 db.version(1).stores({
   business: 'id, serverId, updatedAt, syncStatus',
-  receipts: 'id, businessId, receiptNumber, createdAt, updatedAt, syncStatus, serverId, isPaid', // ✅ Added isPaid index
+  receipts: 'id, businessId, receiptNumber, createdAt, updatedAt, syncStatus, serverId, isPaid',
   receiptItems: 'id, receiptId, serverId, syncStatus',
   outbox: '++id, entityType, entityId, operation, createdAt, retryCount',
   syncState: 'id, entityType',
+  users: 'id,email,name',
 });
 
 export { db };

@@ -1,0 +1,153 @@
+"use client";
+import { useState } from 'react';
+import Link from 'next/link';
+import { Mail, Lock, Eye, EyeOff } from 'lucide-react'; 
+import { FcGoogle } from 'react-icons/fc';
+import Loader from '@/components/Loader';
+import api from '@/lib/axios';
+import { IUser } from '@/lib/types';
+import { db } from '@/lib/db';
+import { performInitialSync } from '@/lib/sync';
+
+export default function RegisterPage() {
+  
+
+  // State
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  
+  // Validation Logic
+  const validateForm = () => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError("Please enter a valid email address.");
+      return false;
+    }
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters long.");
+      return false;
+    }
+    setError("");
+    return true;
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
+  e.preventDefault();
+  if (!validateForm()) return;
+
+  setIsLoading(true);
+  setError('');
+
+  try {
+    const registerRes = await api.post("/api/users/register/", {email,password});
+    
+    const response = await api.post("/api/users/login/",{ email, password });
+    const data = response.data;
+    await performInitialSync(data)
+    
+    window.location.href = "/dashboard";
+
+  } catch (error: any) {
+    const message = error.response?.data?.detail || error.response?.data?.message || error.message;
+    setError(message || "Something went wrong.");
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+
+  const handleGoogleLogin = () => {
+    window.location.href = `${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/google/`;
+  };
+
+  {isLoading && <Loader />}
+  
+  return (
+    <div className="space-y-6">
+      <div className="text-center">
+        <h2 className="text-3xl font-extrabold text-gray-900">Get Started</h2>
+        <p className="mt-2 text-sm text-gray-600">Create your free account today</p>
+      </div>
+
+      <form className="space-y-4" onSubmit={handleRegister}>
+        {error && (
+          <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg border border-red-100">
+            {error}
+          </div>
+        )}
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Email</label>
+          <div className="mt-1 relative">
+            <Mail className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
+            <input 
+              type="email" 
+              required 
+              value={email}
+              onChange={(e) => setEmail(e.target.value)} 
+              className="pl-10 w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#002395] outline-none" 
+              placeholder="you@example.com" 
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Password</label>
+          <div className="mt-1 relative">
+            <Lock className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
+            <input
+              type={showPassword ? "text" : "password"}
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="pl-10 pr-10 w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#002395] outline-none"
+              placeholder="••••••••"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600 focus:outline-none"
+            >
+              {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+            </button>
+          </div>
+        </div>
+        <button
+          type="submit"
+          disabled={isLoading}
+          
+          className="w-full text-white bg-primary p-3 rounded-lg font-bold hover:opacity-90 transition shadow-md flex items-center justify-center gap-2"
+        >
+           Register
+        </button>
+
+        {isLoading && <Loader />}
+        
+
+      </form>
+
+      <div className="relative my-6 text-center">
+        <span className="text-sm text-gray-500">Sign up with Google for faster access</span>
+      </div>
+
+      <button
+        type="button"
+        onClick={handleGoogleLogin}
+        className="w-full flex items-center justify-center gap-2 p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition font-medium"
+      >
+        <FcGoogle className="h-5 w-5" /> Google
+      </button>
+
+      <p className="text-center text-sm text-gray-600">
+        Already have an account?{" "}
+        <Link href="/login" className="font-bold hover:underline " >
+          Log in
+        </Link>
+      </p>
+      
+    </div>
+  );
+}

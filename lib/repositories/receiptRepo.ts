@@ -1,54 +1,45 @@
 import { db } from '../db';
 import type { Receipt, ReceiptItem, ReceiptDraft, DraftItem } from '../types';
 import { calculateReceiptTotals, generateReceiptNumber } from '../types';
-import { getBusiness } from './businessRepo';
 
 
 // QUERY OPERATIONS
 
 export async function getReceipts(): Promise<Receipt[]> {
   return db.receipts
-    .where('deletedAt')
-    .equals(0)
-    .or('deletedAt')
-    .equals(undefined as unknown as number)
     .reverse()
     .sortBy('createdAt');
 }
 
-export async function getReceiptById(id: string): Promise<Receipt | undefined> {
-  return db.receipts.get(id);
-}
-
-export async function getReceiptItems(receiptId: string): Promise<ReceiptItem[]> {
-  return db.receiptItems.where('receiptId').equals(receiptId).toArray();
-}
-
-
-
 // RECEIPT NUMBERING
 
-export async function getLastReceiptNumber(): Promise<string | null> {
-  const lastReceipt = await db.receipts.orderBy('createdAt').last();
-  return lastReceipt?.receiptNumber ?? null;
-}
-
 export async function getNextReceiptNumber(): Promise<string> {
-  const last = await getLastReceiptNumber();
-  return generateReceiptNumber(last);
+  const lastReceipt = await db.receipts.orderBy('createdAt').last();
+  
+  if (!lastReceipt) return "RCPT-001";
+
+  const lastNumber = lastReceipt.receiptNumber;
+  const match = lastNumber.match(/(\d+)$/);
+  
+  if (match) {
+    const nextValue = parseInt(match[0]) + 1;
+    return `RCPT-${nextValue.toString().padStart(3, '0')}`;
+  }
+
+  return `RCPT-${Math.floor(Math.random() * 1000)}`; // Fallback
 }
 
 //CREATE RECEIPT (OFFLINE-FIRST)
 
 export async function saveReceipt(draft: ReceiptDraft): Promise<Receipt> {
   // VALIDATION: Get business from cache
-  const business = await getBusiness();
-  if (!business) {
-    throw new Error('Business profile not found. Complete onboarding first.');
-  }
+  const business = await db.business.toArray();
+  const biz = business[0];
 
+  if (!biz) throw new Error("Business not found, Please complete onboarding");
+  
   // SETUP: Generate IDs and timestamps
-  const now = new Date().toISOString();  // ✅ ISO format (not Date.now())
+  const now = new Date().toISOString();  // ISO format (not Date.now())
   const receiptId = crypto.randomUUID();
 
   // CALCULATIONS: Compute totals
@@ -59,12 +50,16 @@ export async function saveReceipt(draft: ReceiptDraft): Promise<Receipt> {
     draft.discount
   );
 
+  
+
   // BUILD: Create receipt object
-  const receipt: Receipt = {
+
+  const newReceipt: Receipt = {
+    
     id: receiptId,
     serverId: undefined,  // ✅ Will be set after sync
-    businessId: business.id,
-    templateId: business.selectedTemplateId,
+    businessId: biz.id,
+    templateId: biz.selectedTemplateId || 'template-classic',
     receiptNumber: draft.receiptNumber,
     receiptDate: draft.receiptDate,
     customerName: draft.customerName,
@@ -80,44 +75,40 @@ export async function saveReceipt(draft: ReceiptDraft): Promise<Receipt> {
     syncStatus: 'pending',  // ✅ Needs sync
     createdAt: now,
     updatedAt: now,
-    deletedAt: undefined,
+    
   };
 
-  // SAVE: Transaction ensures all-or-nothing
+
+  const newItems: ReceiptItem[] = draft.items.map((item, index) => ({
+    id: crypto.randomUUID(),
+    receiptId: receiptId,
+    description: item.description,
+    quantity: item.quantity,
+    unitPrice: item.unitPrice,
+    total: item.quantity * item.unitPrice,
+    order: index,
+  }));
+
+  
   try {
-    await db.transaction(
-      'rw',
-      [db.receipts, db.receiptItems, db.outbox],
-      async () => {
-        // 1. Save receipt
-        await db.receipts.add(receipt);
-
-        // 2. Save items
-        const items: ReceiptItem[] = draft.items.map((item: DraftItem) => ({
-          id: crypto.randomUUID(),
-          serverId: undefined,
-          receiptId,
-          description: item.description,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
-          total: item.quantity * item.unitPrice,
-          syncStatus: 'pending',
-        }));
-        await db.receiptItems.bulkAdd(items);
-
+    await db.transaction('rw',[db.receipts, db.receiptItems, db.outbox],async () => {
+  
+        await db.receipts.add(newReceipt);
+        await db.receiptItems.bulkAdd(newItems);
+        
         // 3. Queue for sync
         await db.outbox.add({
           entityType: 'receipts', 
           entityId: receiptId,  
           operation: 'create',     
-          payload: { receipt, items },
+          payload: { ...newReceipt, items: newItems },
           createdAt: now,
           retryCount: 0,   
         });
       }
     );
 
-    return receipt;
+    return newReceipt;
 
   } catch (error) {
     console.error('❌ Failed to save receipt:', error);
@@ -154,13 +145,15 @@ export async function deleteReceipt(id: string): Promise<void> {
   }
 }
 
-export async function getReceiptWithItems(
-  receiptId: string
-): Promise<{ receipt: Receipt; items: ReceiptItem[] } | null> {
-  const receipt = await getReceiptById(receiptId);
+export async function getReceiptWithItems(id: string) {
+  const receipt = await db.receipts.get(id);
   if (!receipt) return null;
 
-  const items = await getReceiptItems(receiptId);
+  const items = await db.receiptItems
+    .where('receiptId')
+    .equals(id)
+    .sortBy('order');
+
   return { receipt, items };
 }
 
@@ -300,9 +293,7 @@ export async function getTotalRevenue(): Promise<{
   unpaid: number;
 }> {
   try {
-    const receipts = await db.receipts
-      .filter(r => !r.deletedAt)
-      .toArray();
+    const receipts = await db.receipts.where('deletedAt').equals(0).toArray();
 
     const total = receipts.reduce((sum, r) => sum + r.grandTotal, 0);
     const paid = receipts
