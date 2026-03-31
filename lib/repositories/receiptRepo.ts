@@ -13,20 +13,44 @@ export async function getReceipts(): Promise<Receipt[]> {
 
 // RECEIPT NUMBERING
 
+// Helper — derives the prefix from the business name
+export function getReceiptPrefix(businessName: string): string {
+  const words = businessName.trim().split(/\s+/).filter(Boolean);
+
+  if (words.length === 1) {
+    // One word → first 3 letters
+    return words[0].slice(0, 3).toUpperCase();
+  }
+
+  if (words.length === 2) {
+    // Two words → first 2 letters of word 1 + first letter of word 2
+    return (words[0].slice(0, 2) + words[1].slice(0, 1)).toUpperCase();
+  }
+
+  // Three or more words → first letter of each word
+  return words.map((w) => w[0]).join("").toUpperCase();
+}
+
 export async function getNextReceiptNumber(): Promise<string> {
-  const lastReceipt = await db.receipts.orderBy('createdAt').last();
-  
-  if (!lastReceipt) return "RCPT-001";
+  const business = await db.business.toCollection().first();
+  const businessName = business?.name?.trim();
+
+  // Fallback prefix if no business name is set yet
+  const prefix = businessName ? getReceiptPrefix(businessName) : "RCP";
+
+  const lastReceipt = await db.receipts.orderBy("createdAt").last();
+
+  if (!lastReceipt) return `${prefix}-001`;
 
   const lastNumber = lastReceipt.receiptNumber;
   const match = lastNumber.match(/(\d+)$/);
-  
+
   if (match) {
     const nextValue = parseInt(match[0]) + 1;
-    return `RCPT-${nextValue.toString().padStart(3, '0')}`;
+    return `${prefix}-${nextValue.toString().padStart(3, "0")}`;
   }
 
-  return `RCPT-${Math.floor(Math.random() * 1000)}`; // Fallback
+  return `${prefix}-${Math.floor(Math.random() * 1000).toString().padStart(3, "0")}`;
 }
 
 //CREATE RECEIPT (OFFLINE-FIRST)

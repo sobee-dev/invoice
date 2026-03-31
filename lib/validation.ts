@@ -48,8 +48,8 @@ export  function validateBusinessForm(
   }
 
   // Currency
-  if (!data.currency || data.currency.trim().length !== 3) {
-    errors.currency = "Currency must be a valid 3-letter code";
+  if (!data.currency) {
+    errors.currency = "Currency must be provided";
   }
 
   // Tax

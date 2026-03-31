@@ -7,6 +7,7 @@ import { calculateReceiptTotals } from "@/lib/types";
 import { getBusiness } from "@/lib/repositories/businessRepo";
 import { getNextReceiptNumber, saveReceipt } from "@/lib/repositories/receiptRepo";
 import { useSync } from "@/lib/syncToServer";
+import Loader from "@/components/Loader";
 
 
 
@@ -42,7 +43,7 @@ export default function NewReceiptPage() {
     notes: "",
     items: [],
     taxEnabled: false,
-    taxRate: 0.07,
+    taxRate: 0.00,
     discount: 0,
   });
 
@@ -156,7 +157,7 @@ export default function NewReceiptPage() {
       sessionStorage.removeItem("receiptDraft");
       if (navigator.onLine) {
         // We don't 'await' this so the user isn't stuck waiting on the network
-        syncOutbox().catch(err => console.error("Background sync failed:", err));
+        syncOutbox().catch(err => console.warn("Background sync failed:", err));
       }
       router.push(`/preview/${receipt.id}`);
     } catch (error) {
@@ -178,16 +179,27 @@ export default function NewReceiptPage() {
     router.push("/preview/draft");
   };
 
+
   const formatCurrency = (amount: number) => {
-    return `${business?.currency || "USD"} ${amount.toFixed(2)}`;
+    const currencyCode = business?.currency || "NGN";
+  
+  // toLocaleString adds commas and handles the decimal places
+    const formattedAmount = amount.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+
+    return `${currencyCode} ${formattedAmount}`;
   };
 
-  if (loading) {
+  // const formatCurrency = (amount: number) => {
+  //   return `${business?.currency || "USD"} ${amount.toFixed(2)}`;
+  // };
+
+  if (loading || saving ) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
-    );
+     <Loader />
+    )
   }
 
   return (
@@ -195,7 +207,7 @@ export default function NewReceiptPage() {
       {/* Header */}
       <div className="sticky top-0 z-50 flex items-center justify-between border-b border-slate-200/80 bg-white/80 p-4 backdrop-blur-sm dark:border-slate-800/80 dark:bg-slate-900/80">
         <button
-          onClick={() => router.push("/dashboard")}
+          onClick={() => router.replace("/dashboard")}
           className="p-2 -ml-2 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

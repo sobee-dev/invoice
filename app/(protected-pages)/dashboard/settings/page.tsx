@@ -51,7 +51,7 @@ export default function BusinessSettings() {
     email: "",
     registrationNumber: "",
     logoUrl: "",
-    currency: "USD",
+    currency: "$",
     taxRate: 0,
     taxEnabled: false,
     signatureUrl: "",
@@ -79,7 +79,7 @@ export default function BusinessSettings() {
         signatureUrl: business.signatureUrl ?? "",
         signatureType: business.signatureType ?? "none",
         signatureText: business.signatureText ?? "",
-        currency: business.currency ?? "USD",
+        currency: business.currency ?? "$",
         taxRate: business.taxRate ?? 0,
         taxEnabled: business.taxEnabled ?? false,
         brandColorOne: business.brandColorOne ?? "#3b82f6",
@@ -377,7 +377,7 @@ export default function BusinessSettings() {
                   onChange={handleChange}
                   className="w-full h-11 px-4 rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent"
                 >
-                  {CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.symbol} - {c.name}</option>)}
+                  {CURRENCIES.map(c => <option key={c.code} value={c.symbol}>{c.symbol} - {c.name}</option>)}
                 </select>
               </div>
               <div>

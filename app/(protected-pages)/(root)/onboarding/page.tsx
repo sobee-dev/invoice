@@ -49,7 +49,7 @@ export default function OnboardingBusinessInfo() {
     email: "",
     registrationNumber: "",
     logoUrl: "",
-    currency: "USD",
+    currency: "$",
     taxRate: 0,
     taxEnabled: false,
     signatureUrl: "",
@@ -59,6 +59,12 @@ export default function OnboardingBusinessInfo() {
 
 
   useEffect(() => {
+
+//     const savedCurrency = business?.currency || "$";
+
+// // Check if the saved value is a code (like "USD") and convert it to a symbol
+//     const mappedCurrency = CURRENCIES.find(c => c.code === savedCurrency)?.symbol || savedCurrency;
+    
     if (!contextLoading && (user || business)) {
       setFormData((prev) => ({
         ...prev,
@@ -78,7 +84,7 @@ export default function OnboardingBusinessInfo() {
         signatureText: business?.signatureText ?? "",
 
         // Financial
-        currency: business?.currency ?? "USD",
+        currency: business?.currency ?? "$",
         taxRate: business?.taxRate ?? 0,
         taxEnabled: business?.taxEnabled ?? false,
       }));
@@ -497,7 +503,7 @@ export default function OnboardingBusinessInfo() {
             className="w-full h-12 px-4 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:border-blue-500 focus:outline-none"
           >
             {CURRENCIES.map((c) => (
-              <option key={c.code} value={c.code}>
+              <option key={c.code} value={c.symbol}>
                 {c.symbol} - {c.name}
               </option>
             ))}

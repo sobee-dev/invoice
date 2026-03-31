@@ -7,11 +7,12 @@ import { FcGoogle } from "react-icons/fc";
 import Loader from '@/components/Loader';
 import  api  from '@/lib/axios';
 import { performInitialSync } from '@/lib/sync';
+import { useRouter } from "next/navigation";
 
 
 export default function LoginPage() {
   
-
+  const router = useRouter();
   // State
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -43,6 +44,7 @@ export default function LoginPage() {
  
     try {
       const response = await api.post("/api/users/login/",{ email, password });
+      console.log("Full Response:", response);
       const data = response.data;
       const token = data.access;
       const refreshToken = data.refresh;
@@ -51,11 +53,14 @@ export default function LoginPage() {
       localStorage.setItem('token', token);
       localStorage.setItem('refreshToken', refreshToken);
     }
-      await performInitialSync(data)
+      console.log("Starting sync...");
+      await performInitialSync(data); 
+      console.log("Sync finished.");
     
-      window.location.href = "/dashboard";
+      window.location.replace("/dashboard");
 
     } catch (error: any) {
+      console.error("Caught error:", error);
       const serverMessage = error.response?.data?.detail || error.response?.data?.message;
       setError(serverMessage || "Login failed. Please check your credentials.");
     } finally {
@@ -70,7 +75,7 @@ export default function LoginPage() {
 
 
 
-  {isLoading && <Loader />}
+  if (isLoading) {return <Loader />}
 
   return (
     <div className="space-y-6">

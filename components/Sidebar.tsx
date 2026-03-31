@@ -80,7 +80,7 @@ export default function Sidebar() {
         {/* Bottom Actions - 2 & 3: Logout and Responsiveness */}
         <div className="p-4 border-t border-slate-200 dark:border-slate-800 space-y-2">
           <button 
-            onClick={() => window.location.href = "/dashboard/new-receipt"}
+            onClick={() => window.location.href = "/new-receipt"}
             className="w-full flex items-center gap-3 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
           >
             <PlusCircle size={20} />

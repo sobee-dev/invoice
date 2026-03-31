@@ -17,6 +17,7 @@ export function SignaturePad({ onDrawEnd }: { onDrawEnd: (blob: Blob) => void })
     <div className="border rounded-lg p-2 bg-white">
       <SignatureCanvas
         ref={ref}
+        penColor="blue"
         canvasProps={{ className: "w-full h-40 cursor-crosshair" }}
       />
       <div className="flex gap-2 mt-2">

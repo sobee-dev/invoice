@@ -5,13 +5,12 @@ import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { FcGoogle } from 'react-icons/fc';
 import Loader from '@/components/Loader';
 import api from '@/lib/axios';
-import { IUser } from '@/lib/types';
-import { db } from '@/lib/db';
 import { performInitialSync } from '@/lib/sync';
+import { useRouter } from 'next/navigation';
 
 export default function RegisterPage() {
   
-
+  const router = useRouter();
   // State
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -42,28 +41,42 @@ export default function RegisterPage() {
   setError('');
 
   try {
-    const registerRes = await api.post("/api/users/register/", {email,password});
+  
     
-    const response = await api.post("/api/users/login/",{ email, password });
-    const data = response.data;
-    await performInitialSync(data)
-    
-    window.location.href = "/dashboard";
+    const response = await api.post("/api/users/register/",{ email, password });
+        const data = response.data;
+        
+        if (response.status === 201) {
+          localStorage.setItem('token', data.tokens.access);
+          localStorage.setItem('refreshToken', data.tokens.refresh);
+            
+          await performInitialSync(data);
 
-  } catch (error: any) {
-    const message = error.response?.data?.detail || error.response?.data?.message || error.message;
-    setError(message || "Something went wrong.");
-  } finally {
-    setIsLoading(false);
-  }
-};
+          window.location.replace("/dashboard");
+        } else {
+          throw new Error("No tokens received from server");
+        }
+      } catch (error: any) {
+        console.error("Registration detail:", error.response?.data);
+
+        const serverMessage = 
+          error.response?.data?.email?.[0] || // Common Django/DRF error format
+          error.response?.data?.detail || 
+          error.response?.data?.message || 
+          "An error occurred during registration.";
+        
+        setError(serverMessage);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
 
   const handleGoogleLogin = () => {
     window.location.href = `${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/google/`;
   };
 
-  {isLoading && <Loader />}
+  if (isLoading) {return <Loader />}
   
   return (
     <div className="space-y-6">
@@ -122,10 +135,7 @@ export default function RegisterPage() {
           className="w-full text-white bg-primary p-3 rounded-lg font-bold hover:opacity-90 transition shadow-md flex items-center justify-center gap-2"
         >
            Register
-        </button>
-
-        {isLoading && <Loader />}
-        
+        </button>        
 
       </form>
 
