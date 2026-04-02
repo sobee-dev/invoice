@@ -11,8 +11,17 @@ export default function TemplateClassic({ business, receipt, items }: TemplatePr
     return `${business.currency} ${amount.toFixed(2)}`;
   };
 
+  // Reconciling address display
+  const fullAddress = [business.addressOne, business.addressTwo]
+    .filter(Boolean)
+    .join('\n');
+
   return (
-    <div className="bg-white p-8 max-w-2xl mx-auto shadow-lg" id="receipt-printable">
+    <div 
+      className="bg-white p-8 max-w-2xl mx-auto shadow-lg" 
+      id="receipt-printable"
+      style={{ borderTop: `4px solid ${business.brandColorOne}` }} // Using brand color
+    >
       {/* Header */}
       <div className="border-b-2 border-gray-800 pb-4 mb-6">
         <div className="flex items-start justify-between">
@@ -21,14 +30,15 @@ export default function TemplateClassic({ business, receipt, items }: TemplatePr
               <img
                 src={business.logoUrl}
                 alt={business.name}
-                className="h-16 w-auto mb-2"
+                className="h-16 w-auto mb-2 object-contain"
               />
             )}
             <h1 className="text-2xl font-bold text-gray-900">{business.name}</h1>
-            <p className="text-sm text-gray-600 whitespace-pre-line">{business.address}</p>
+            {business.motto && <p className="text-xs italic text-gray-500 mb-1">{business.motto}</p>}
+            <p className="text-sm text-gray-600 whitespace-pre-line">{fullAddress}</p>
           </div>
           <div className="text-right">
-            <h2 className="text-xl font-semibold text-gray-800">RECEIPT</h2>
+            <h2 className="text-xl font-semibold" style={{ color: business.brandColorOne }}>RECEIPT</h2>
             <p className="text-lg font-mono text-gray-700">{receipt.receiptNumber}</p>
             <p className="text-sm text-gray-600">{receipt.receiptDate}</p>
           </div>
@@ -36,12 +46,16 @@ export default function TemplateClassic({ business, receipt, items }: TemplatePr
       </div>
 
       {/* Business Contact */}
-      <div className="mb-6 text-sm text-gray-600">
-        <p>Phone: {business.phone}</p>
-        <p>Email: {business.email}</p>
-        {business.registrationNumber && (
-          <p>Reg No: {business.registrationNumber}</p>
-        )}
+      <div className="mb-6 text-sm text-gray-600 grid grid-cols-2 gap-2">
+        <div>
+          <p><span className="font-semibold">Phone:</span> {business.phone}</p>
+          <p><span className="font-semibold">Email:</span> {business.email}</p>
+        </div>
+        <div className="text-right">
+          {business.registrationNumber && (
+            <p><span className="font-semibold">Reg No:</span> {business.registrationNumber}</p>
+          )}
+        </div>
       </div>
 
       {/* Customer Info */}
@@ -74,8 +88,25 @@ export default function TemplateClassic({ business, receipt, items }: TemplatePr
         </tbody>
       </table>
 
-      {/* Totals */}
-      <div className="flex justify-end">
+      {/* Totals & Signature Section */}
+      <div className="flex justify-between items-end">
+        {/* Signature Area */}
+        <div className="w-1/2">
+          {business.signatureType !== 'none' && (
+            <div className="text-left">
+              <p className="text-xs text-gray-500 mb-2">Authorized Signature</p>
+              {business.signatureType === 'image' && business.signatureUrl ? (
+                <img src={business.signatureUrl} alt="Signature" className="h-12 w-auto border-b border-gray-400" />
+              ) : (
+                <p className="font-serif text-xl border-b border-gray-400 inline-block px-4">
+                  {business.signatureText}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Totals */}
         <div className="w-64">
           <div className="flex justify-between py-2 border-b border-gray-200">
             <span className="text-gray-600">Subtotal</span>
@@ -93,7 +124,10 @@ export default function TemplateClassic({ business, receipt, items }: TemplatePr
               <span className="text-red-600">-{formatCurrency(receipt.discount)}</span>
             </div>
           )}
-          <div className="flex justify-between py-3 border-t-2 border-gray-800 mt-2">
+          <div 
+            className="flex justify-between py-3 border-t-2 mt-2"
+            style={{ borderColor: business.brandColorTwo }}
+          >
             <span className="text-lg font-bold text-gray-900">Total</span>
             <span className="text-lg font-bold text-gray-900">{formatCurrency(receipt.grandTotal)}</span>
           </div>
@@ -111,6 +145,9 @@ export default function TemplateClassic({ business, receipt, items }: TemplatePr
       {/* Footer */}
       <div className="mt-8 pt-4 border-t border-gray-200 text-center text-sm text-gray-500">
         <p>Thank you for your business!</p>
+        {receipt.isPaid && receipt.paidAt && (
+            <p className="mt-1 font-bold text-green-600">PAID ON: {receipt.paidAt}</p>
+        )}
       </div>
     </div>
   );

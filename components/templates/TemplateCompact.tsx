@@ -11,6 +11,11 @@ export default function TemplateCompact({ business, receipt, items }: TemplatePr
     return `${business.currency} ${amount.toFixed(2)}`;
   };
 
+  // Reconciling address display
+  const fullAddress = [business.addressOne, business.addressTwo]
+    .filter(Boolean)
+    .join('\n');
+
   return (
     <div className="bg-white max-w-xs mx-auto p-4 font-mono text-sm shadow-lg" id="receipt-printable">
       {/* Header - Centered */}
@@ -19,11 +24,12 @@ export default function TemplateCompact({ business, receipt, items }: TemplatePr
           <img
             src={business.logoUrl}
             alt={business.name}
-            className="h-10 w-auto mx-auto mb-2"
+            className="h-10 w-auto mx-auto mb-2 grayscale" // Thermal printers are usually B&W
           />
         )}
         <h1 className="text-base font-bold uppercase">{business.name}</h1>
-        <p className="text-xs text-gray-600 whitespace-pre-line">{business.address}</p>
+        {business.motto && <p className="text-[10px] italic text-gray-500">{business.motto}</p>}
+        <p className="text-xs text-gray-600 whitespace-pre-line">{fullAddress}</p>
         <p className="text-xs text-gray-600">{business.phone}</p>
         {business.registrationNumber && (
           <p className="text-xs text-gray-500">Reg: {business.registrationNumber}</p>
@@ -95,6 +101,18 @@ export default function TemplateCompact({ business, receipt, items }: TemplatePr
         </div>
       </div>
 
+      {/* Signature Section - Compact */}
+      {business.signatureType !== 'none' && (
+        <div className="mt-4 text-center">
+          <p className="text-[10px] text-gray-400 mb-1">Signature</p>
+          {business.signatureType === 'image' && business.signatureUrl ? (
+            <img src={business.signatureUrl} alt="Signature" className="h-8 w-auto mx-auto grayscale" />
+          ) : (
+            <p className="font-serif italic text-sm">{business.signatureText}</p>
+          )}
+        </div>
+      )}
+
       {/* Notes */}
       {receipt.notes && (
         <div className="mt-3 pt-2 border-t border-dashed border-gray-400">
@@ -104,6 +122,7 @@ export default function TemplateCompact({ business, receipt, items }: TemplatePr
 
       {/* Footer */}
       <div className="mt-4 pt-3 border-t border-dashed border-gray-400 text-center">
+        {receipt.isPaid && <p className="text-xs font-bold uppercase mb-1">*** PAID ***</p>}
         <p className="text-xs">Thank you!</p>
         <p className="text-xs text-gray-500 mt-1">*** {business.name} ***</p>
       </div>
