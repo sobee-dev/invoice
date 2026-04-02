@@ -15,9 +15,9 @@ export default function TemplateCompact({ business, receipt, items }: TemplatePr
     <div className="bg-white max-w-xs mx-auto p-4 font-mono text-sm shadow-lg" id="receipt-printable">
       {/* Header - Centered */}
       <div className="text-center mb-4 pb-3 border-b border-dashed border-gray-400">
-        {business.logo && (
+        {business.logoUrl && (
           <img
-            src={business.logo}
+            src={business.logoUrl}
             alt={business.name}
             className="h-10 w-auto mx-auto mb-2"
           />
