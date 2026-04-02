@@ -17,9 +17,9 @@ export default function TemplateClassic({ business, receipt, items }: TemplatePr
       <div className="border-b-2 border-gray-800 pb-4 mb-6">
         <div className="flex items-start justify-between">
           <div>
-            {business.logo && (
+            {business.logoUrl && (
               <img
-                src={business.logo}
+                src={business.logoUrl}
                 alt={business.name}
                 className="h-16 w-auto mb-2"
               />
