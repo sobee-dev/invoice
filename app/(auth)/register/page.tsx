@@ -7,6 +7,7 @@ import Loader from '@/components/Loader';
 import api from '@/lib/axios';
 import { performInitialSync } from '@/lib/sync';
 import { useRouter } from 'next/navigation';
+import GoogleAuthButton from '@/components/GoogleAuthButton';
 
 export default function RegisterPage() {
   
@@ -72,9 +73,7 @@ export default function RegisterPage() {
     };
 
 
-  const handleGoogleLogin = () => {
-    window.location.href = `${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/google/`;
-  };
+  
 
   if (isLoading) {return <Loader />}
   
@@ -143,13 +142,7 @@ export default function RegisterPage() {
         <span className="text-sm text-gray-500">Sign up with Google for faster access</span>
       </div>
 
-      <button
-        type="button"
-        onClick={handleGoogleLogin}
-        className="w-full flex items-center justify-center gap-2 p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition font-medium"
-      >
-        <FcGoogle className="h-5 w-5" /> Google
-      </button>
+     <GoogleAuthButton label="Continue with Google" />
 
       <p className="text-center text-sm text-gray-600">
         Already have an account?{" "}
