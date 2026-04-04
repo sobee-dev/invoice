@@ -143,3 +143,7 @@
 //     </div>
 //   );
 // }
+
+export default function ResetPasswordPage() {
+  return null; // Renders nothing, but satisfies the "Page" requirement
+}
