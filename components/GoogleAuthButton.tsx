@@ -7,7 +7,7 @@ export default function GoogleAuthButton({ label = "Continue with Google" }: { l
 
   const handleGoogleLogin = () => {
     const params = new URLSearchParams({
-      client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
+      client_id: process.env.GOOGLE_CLIENT_ID!,
       redirect_uri: `${process.env.NEXT_PUBLIC_APP_URL}/oauth/callback`,
       response_type: "code",
       scope: "openid email profile",
