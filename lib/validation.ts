@@ -25,27 +25,34 @@ export  function validateBusinessForm(
 
 
   // Motto
-  if (data.motto && data.motto.trim().length === 0) {
+  if (!data.motto || data.motto.trim().length === 0) {
     errors.motto = "Motto cannot be empty";
   }
 
   // Phone
-  if (data.phone && !/^\+?[\d\s\-()]{7,}$/.test(data.phone)) {
-    errors.phone = "Invalid phone format";
+  // if (!data.phone?.trim()) {
+  //   errors.phone = "Phone number is required";
+  // }
+  if (!data.phone?.trim() || data.phone && !/^\+?[\d\s\-()]{7,}$/.test(data.phone)) {
+    errors.phone = "Invalid phone format required";
   }
 
   // Email
-  if (data.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
-    errors.email = "Invalid email format";
+  if (!data.email?.trim()) {
+    errors.email = "Email address is required";
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+    errors.email = "Please enter a valid email address";
   }
 
-  // Registration Number
- 
 
-  // Logo URL
-  if (data.logoUrl && !/^https?:\/\/.+/.test(data.logoUrl)) {
-    errors.logoUrl = "Logo URL must be a valid URL";
-  }
+  if (!data.description?.trim()) {
+      errors.description = "Business description is required";
+    }
+
+  // // Logo URL
+  // if (data.logoUrl && !/^https?:\/\/.+/.test(data.logoUrl)) {
+  //   errors.logoUrl = "Logo URL must be a valid URL";
+  // }
 
   // Currency
   if (!data.currency) {
