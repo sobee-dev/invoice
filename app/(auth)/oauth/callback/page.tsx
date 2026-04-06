@@ -19,7 +19,7 @@ export default function OAuthCallback() {
 
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/auth/google/callback/`,
+          `${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/google/callback/`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
