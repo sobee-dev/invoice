@@ -40,7 +40,7 @@ export default function OAuthCallback() {
 
         // New users go to onboarding, existing users go to dashboard
        if (data.user.is_new) {
-          window.location.href = "/onboarding";
+          window.location.replace("/onboarding");
        } else {
           window.location.replace("/dashboard");
        }
