@@ -3,58 +3,12 @@ import puppeteer from 'puppeteer-core';
 import chromium from '@sparticuz/chromium';
 import path from 'path';
 import fs from 'fs';
-import { Ratelimit } from "@upstash/ratelimit";
-import { Redis } from "@upstash/redis";
 
-// ── Lazy initializer — won't crash if env vars are missing ─────────────────
-function getRatelimiter() {
-  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
-    return null;
-  }
 
-  const redis = new Redis({
-    url: process.env.UPSTASH_REDIS_REST_URL,
-    token: process.env.UPSTASH_REDIS_REST_TOKEN,
-  });
-
-  return new Ratelimit({
-    redis,
-    limiter: Ratelimit.slidingWindow(3, "30 s"),
-    analytics: true,
-  });
-}
 
 export async function POST(req: Request) {
   try {
 
-    // ── Rate limiting (skipped in development) ───────────────────────────────
-    if (process.env.NODE_ENV !== "development") {
-      const limiter = getRatelimiter();
-
-      if (limiter) {
-        const ip =
-          req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "127.0.0.1";
-
-        const { success, limit, reset, remaining } = await limiter.limit(ip);
-
-        if (!success) {
-          return NextResponse.json(
-            {
-              error:
-                "Too many requests. Please wait before generating another receipt.",
-            },
-            {
-              status: 429,
-              headers: {
-                "X-RateLimit-Limit": limit.toString(),
-                "X-RateLimit-Remaining": remaining.toString(),
-                "X-RateLimit-Reset": new Date(reset).toISOString(),
-              },
-            }
-          );
-        }
-      }
-    }
 
     // ── Parse request body ───────────────────────────────────────────────────
     const { html, type, fileName, colorMode } = await req.json();
