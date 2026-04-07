@@ -192,7 +192,7 @@ export default function OnboardingBusinessInfo() {
         {/* Logo Upload */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-            Business Logo (optional)
+            Business Logo
           </label>
           <div className="flex items-center gap-4">
             {formData.logoUrl ? (
@@ -274,7 +274,7 @@ export default function OnboardingBusinessInfo() {
         {/* Business Description */}
         <div className="mb-4">
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-            Business Description (optional)
+            Business Description
           </label>
           <textarea
             name="description"
@@ -289,7 +289,7 @@ export default function OnboardingBusinessInfo() {
         {/* Business Motto */}
         <div className="mb-4">
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-            Business Motto/Tagline (optional)
+            Business Motto/Tagline
           </label>
           <input
             name="motto"
@@ -396,7 +396,7 @@ export default function OnboardingBusinessInfo() {
         
         <div className="mb-4">
           <label className="block text-sm font-medium mb-2">
-            Authorized Signature Name (optional)
+            Authorized Signature Name
           </label>
 
           <div className="flex gap-4 mb-3 text-sm">

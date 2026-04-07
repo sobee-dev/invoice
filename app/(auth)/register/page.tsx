@@ -100,7 +100,7 @@ export default function RegisterPage() {
               required 
               value={email}
               onChange={(e) => setEmail(e.target.value)} 
-              className="pl-10 w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#002395] outline-none" 
+              className="pl-10 w-full p-2.5 border text-gray-600 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#002395] outline-none" 
               placeholder="you@example.com" 
             />
           </div>
@@ -115,7 +115,7 @@ export default function RegisterPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="pl-10 pr-10 w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#002395] outline-none"
+              className="pl-10 pr-10 w-full p-2.5 border text-gray-600 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#002395] outline-none"
               placeholder="••••••••"
             />
             <button

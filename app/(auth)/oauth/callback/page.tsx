@@ -39,11 +39,11 @@ export default function OAuthCallback() {
         localStorage.setItem("refresh_token", data.refresh);
 
         // New users go to onboarding, existing users go to dashboard
-        if (data.user.isNew) {
-          router.replace("/onboarding");
-        } else {
-          router.replace("/dashboard");
-        }
+       if (data.user.is_new) {
+          window.location.href = "/onboarding";
+       } else {
+          window.location.replace("/dashboard");
+       }
 
       } catch (err: any) {
         console.error("OAuth error:", err);
