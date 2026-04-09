@@ -55,7 +55,7 @@ export default function TemplateModern({ business, receipt, items }: TemplatePro
               <img
                 src={business.logoUrl}
                 alt=""
-                className="h-12 w-12 object-contain mix-blend-multiply"
+                className="h-14 w-14 object-contain mix-blend-multiply"
               />
             </div>
           )}

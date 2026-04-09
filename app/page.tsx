@@ -209,8 +209,8 @@ export default function LandingPage() {
                 <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-4 group-hover:bg-primary group-hover:text-white transition-all duration-300">
                   {f.icon}
                 </div>
-                <h3 className="font-bold text-slate-900 dark:text-white mb-2 !text-base !text-left">{f.title}</h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed !text-left">{f.description}</p>
+                <h3 className="font-bold text-slate-900 dark:text-white mb-2 text-base! text-left!">{f.title}</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed text-left!">{f.description}</p>
               </div>
             ))}
           </div>
