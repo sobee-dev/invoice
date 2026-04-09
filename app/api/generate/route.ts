@@ -33,6 +33,8 @@ export async function POST(req: Request) {
       <html class="">
         <head>
           <meta charset="UTF-8">
+          <link rel="preconnect" href="https://fonts.googleapis.com">
+          <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700&display=swap" rel="stylesheet">
           <script src="https://cdn.tailwindcss.com"></script>
           <style>
             ${cssContent}
