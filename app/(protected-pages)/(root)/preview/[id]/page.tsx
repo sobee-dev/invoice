@@ -9,7 +9,6 @@ import { getReceiptWithItems, saveReceipt } from "@/lib/repositories/receiptRepo
 import { ReceiptRenderer } from "@/components/templates";
 import Loader from "@/components/Loader";
 
-// ── Removed top-level require — moved into useEffect ──────────────
 
 const triggerDownload = (blob: Blob, fileName: string) => {
   const url = window.URL.createObjectURL(blob);
@@ -42,24 +41,24 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
   }, []);
 
   // ── Force desktop viewport ────────────────────────────────────────
-  useEffect(() => {
-    if (!isMounted) return;
-    let viewport = document.querySelector('meta[name="viewport"]');
-    const original = viewport?.getAttribute('content');
+  // useEffect(() => {
+  //   if (!isMounted) return;
+  //   let viewport = document.querySelector('meta[name="viewport"]');
+  //   const original = viewport?.getAttribute('content');
 
-    if (!viewport) {
-      viewport = document.createElement('meta');
-      viewport.setAttribute('name', 'viewport');
-      document.head.appendChild(viewport);
-    }
+  //   if (!viewport) {
+  //     viewport = document.createElement('meta');
+  //     viewport.setAttribute('name', 'viewport');
+  //     document.head.appendChild(viewport);
+  //   }
 
-    viewport.setAttribute('content', 'width=1024, initial-scale=0.5, maximum-scale=1');
+  //   viewport.setAttribute('content', 'width=1024, initial-scale=0.5, maximum-scale=1');
 
-    return () => {
-      if (original) viewport?.setAttribute('content', original);
-      else viewport?.remove();
-    };
-  }, [isMounted]);
+  //   return () => {
+  //     if (original) viewport?.setAttribute('content', original);
+  //     else viewport?.remove();
+  //   };
+  // }, [isMounted]);
 
   // ── Data loading ──────────────────────────────────────────────────
   useEffect(() => {
@@ -160,7 +159,29 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
 
     setIsPreparing(true);
     try {
+      // ── Convert all images to base64 before sending to Puppeteer ────
+      const images = Array.from(element.querySelectorAll("img"));
+      await Promise.all(
+        images.map(async (img) => {
+          if (!img.src || img.src.startsWith("data:")) return;
+          try {
+            const res = await fetch(img.src);
+            const blob = await res.blob();
+            const base64 = await new Promise<string>((resolve) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(reader.result as string);
+              reader.readAsDataURL(blob);
+            });
+            img.src = base64;
+          } catch (e) {
+            console.warn("Failed to convert image:", img.src, e);
+          }
+        })
+      );
+
+      // ── Now grab innerHTML — all imgs are already base64 ────────────
       const htmlContent = `<div id="receipt-capture-area">${element.innerHTML}</div>`;
+
       const [pdfRes, imgRes] = await Promise.all([
         fetch('/api/generate', {
           method: 'POST',
@@ -209,7 +230,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const handlePrint = () => window.print();
 
   // ── Block render until mounted AND data is ready ─────────────────
-  if (!isMounted || loading || !business || !receipt || saving) {   // ← NEW !isMounted
+  if (!isMounted || loading || !business || !receipt || saving || isPreparing) {   // ← NEW !isMounted
     return <Loader />;
   }
 
@@ -230,12 +251,21 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
 
       {/* Content */}
       <div className="mb-30 py-8 px-4" id="receipt-capture-area">
-        <ReceiptRenderer
-          templateId={business.selectedTemplateId}
-          business={business}
-          receipt={receipt}
-          items={items}
-        />
+        <div className="
+          w-full overflow-x-hidden
+          [&>*]:origin-top-left
+          [&>*]:scale-[0.55]
+          [&>*]:w-[182%]
+          sm:[&>*]:scale-100
+          sm:[&>*]:w-full
+        "> 
+          <ReceiptRenderer
+            templateId={business.selectedTemplateId}
+            business={business}
+            receipt={receipt}
+            items={items}
+          />
+        </div> 
       </div>
 
       {/* Footer Actions */}
@@ -253,7 +283,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
               <>
                 {!preparedFiles ? (
                   <>
-                    <button onClick={handlePrepareAll} disabled={isPreparing} className="flex-2 h-12 rounded-lg text-black font-bold flex items-center justify-center gap-2">
+                    <button onClick={handlePrepareAll} disabled={isPreparing} className="flex-2 h-12 rounded-lg border border-slate-300 dark:border-slate-600 dark:text-white text-black font-bold flex items-center justify-center gap-2">
                       {isPreparing ? <Loader /> : "Share"}
                     </button>
                     <button onClick={handlePrint} className="flex-1 h-12 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white font-semibold">Print</button>

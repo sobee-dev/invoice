@@ -5,6 +5,8 @@ import path from 'path';
 import fs from 'fs';
 
 
+export const maxDuration = 60;
+export const runtime = "nodejs";
 
 export async function POST(req: Request) {
   try {
