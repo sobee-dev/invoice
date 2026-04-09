@@ -64,7 +64,7 @@ export default function TemplateModern({ business, receipt, items }: TemplatePro
           <div className="w-full text-center z-10 ">
             <h1 
               ref={nameRef}  
-              className="pl-20 font-black uppercase tracking-tighter whitespace-nowrap text-white leading-[0.9]
+              className="pl-22 font-black uppercase tracking-tighter whitespace-nowrap leading-[0.9]
                   text-[clamp(1.5rem,6vw,4rem)] "
                 style={{ color: brandColorOne }}>
               {business.name}
@@ -239,7 +239,10 @@ export default function TemplateModern({ business, receipt, items }: TemplatePro
       </div>
 
       {/* Footer */}
-      <div className="bg-gray-100 px-8 py-3 text-center">
+      <div className="bg-gray-100 px-8 py-3 text-center border-t-4" style={{ 
+          backgroundColor: `${brandColorOne}15`,
+          borderColor: brandColorOne 
+        }}>
         <p className="text-sm text-gray-500">Thank you for choosing {business.name}!</p>
         {business.registrationNumber && (
           <p className="text-xs text-gray-400 mt-1">Reg. No: {business.registrationNumber}</p>

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import puppeteer from 'puppeteer-core';
-import chromium from '@sparticuz/chromium';
+import chromium from '@sparticuz/chromium-min';
 import path from 'path';
 import fs from 'fs';
 
@@ -13,7 +13,7 @@ export async function POST(req: Request) {
 
 
     // ── Parse request body ───────────────────────────────────────────────────
-    const { html, type, fileName, colorMode } = await req.json();
+    const { html, type, fileName } = await req.json();
 
     if (!html || !type || !fileName) {
       return NextResponse.json(
@@ -30,7 +30,7 @@ export async function POST(req: Request) {
 
     const fullHtml = `
       <!DOCTYPE html>
-      <html class="${colorMode === 'dark' ? 'dark' : ''}">
+      <html class="">
         <head>
           <meta charset="UTF-8">
           <script src="https://cdn.tailwindcss.com"></script>
@@ -48,6 +48,9 @@ export async function POST(req: Request) {
             .dark #receipt-wrapper {
               background: #0f172a;
             }
+            .grid > div {
+              break-inside: avoid;
+        }
           </style>
         </head>
         <body>
@@ -64,7 +67,7 @@ export async function POST(req: Request) {
       executablePath: isLocal
         ? process.env.CHROME_PATH ||
           'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
-        : await chromium.executablePath(),
+        : await chromium.executablePath('https://github.com/Sparticuz/chromium/releases/download/v131.0.1/chromium-v131.0.1-pack.tar'),
       headless: true,
     });
 
