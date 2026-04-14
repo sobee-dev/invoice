@@ -16,6 +16,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useDashboardData } from "@/context/DashboardContext";
 import LogoutModal from "./LogoutModal";
+import SidebarInstallButton from "./SidebarInstallButton";
 
 const menuItems = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -86,6 +87,8 @@ export default function Sidebar() {
             <PlusCircle size={20} />
             <span>New Receipt</span>
           </button>
+
+          <SidebarInstallButton />
           
           <button 
             onClick={() => setShowLogoutConfirm(true)}

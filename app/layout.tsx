@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { DashboardProvider } from "@/context/DashboardContext";
+import { PWAProvider } from "@/context/PWAContext";
 
 
 
@@ -37,6 +38,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#002395" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="BillBuzz" />
+        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
         {/* <link rel="stylesheet" href="/globals.css" /> */}
         
       </head>
@@ -44,7 +51,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <DashboardProvider>
-          {children}
+          <PWAProvider>
+            {children}
+          </PWAProvider>
         </DashboardProvider>
         
       </body>

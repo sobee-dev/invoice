@@ -1,9 +1,15 @@
 import type { NextConfig } from "next";
+const withPWA = require("next-pwa")({
+  dest: "public",
+  register: true,
+  skipWaiting: true,
+  disable: process.env.NODE_ENV === "development",
+});
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
   cacheComponents: false,
-  serverExternalPackages: ["puppeteer-core", "@sparticuz/chromium"],
+  serverExternalPackages: ["puppeteer-core", "@sparticuz/chromium-min"],
 };
 
-export default nextConfig;
+export default withPWA(nextConfig);

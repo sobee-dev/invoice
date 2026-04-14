@@ -8,6 +8,7 @@ import { getBusiness } from "@/lib/repositories/businessRepo";
 import { getReceiptWithItems, saveReceipt } from "@/lib/repositories/receiptRepo";
 import { ReceiptRenderer } from "@/components/templates";
 import Loader from "@/components/Loader";
+import PostReceiptInstallPrompt from "@/components/PostReceiptInstallPrompt";
 
 
 const triggerDownload = (blob: Blob, fileName: string) => {
@@ -34,6 +35,8 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const [draftData, setDraftData] = useState<ReceiptDraft | null>(null);
   const [preparedFiles, setPreparedFiles] = useState<{ pdf: File; image: File } | null>(null);
   const [isPreparing, setIsPreparing] = useState(false);
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
+
 
   // ── Mount guard — ensures nothing runs during SSR/prerender ─────
   useEffect(() => {
@@ -151,6 +154,8 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
     } finally {
       setSaving(false);
     }
+
+    setShowInstallPrompt(true);
   };
 
   const handlePrepareAll = async () => {
@@ -233,6 +238,10 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
   if (!isMounted || loading || !business || !receipt || saving || isPreparing) {   // ← NEW !isMounted
     return <Loader />;
   }
+
+  {showInstallPrompt && (
+  <PostReceiptInstallPrompt onDismiss={() => setShowInstallPrompt(false)} />
+  )}
 
   return (
     <div className="min-h-screen bg-slate-100 dark:bg-slate-900">
