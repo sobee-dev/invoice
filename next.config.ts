@@ -10,6 +10,7 @@ const nextConfig: NextConfig = {
   reactCompiler: true,
   cacheComponents: false,
   serverExternalPackages: ["puppeteer-core", "@sparticuz/chromium-min"],
+  turbopack: {},
 };
 
 export default withPWA(nextConfig);
