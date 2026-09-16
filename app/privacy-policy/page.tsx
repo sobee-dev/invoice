@@ -144,20 +144,20 @@ const sections = [
 
 export default function PrivacyPolicyPage() {
   return (
-    <div className="min-h-screen bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
+    <div className="min-h-screen bg-[#fbf8fd] text-[#1b1b1f]">
 
       {/* Navbar */}
-      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-slate-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md">
+      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-[#c5c6d0] bg-white/90 backdrop-blur-md">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-[#1b2e5e] flex items-center justify-center">
               <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
-            <span className="font-bold text-lg tracking-tight">Billbuzz</span>
+            <span className="font-bold tracking-tight text-[#1b1b1f]">Billbuzz</span>
           </Link>
-          <Link href="/" className="text-sm text-slate-500 dark:text-slate-400 hover:text-primary transition-colors flex items-center gap-1.5">
+          <Link href="/" className="text-sm text-[#45464f] hover:text-[#1b2e5e] transition-colors flex items-center gap-1.5">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
@@ -167,14 +167,14 @@ export default function PrivacyPolicyPage() {
       </nav>
 
       {/* Header */}
-      <div className="pt-28 pb-12 px-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/30">
+      <div className="pt-28 pb-12 px-6 border-b border-[#c5c6d0] bg-white">
         <div className="max-w-3xl mx-auto">
-          <p className="text-xs uppercase tracking-widest text-primary font-semibold mb-3">Legal</p>
-          <h1 className="text-4xl md:text-5xl font-extrabold mb-4">Privacy Policy</h1>
-          <p className="text-slate-500 dark:text-slate-400 text-base">
+          <p className="text-xs uppercase tracking-widest text-[#1b2e5e] font-semibold mb-3">Legal</p>
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 tracking-tight text-[#1b1b1f]">Privacy Policy</h1>
+          <p className="text-[#45464f] text-base leading-relaxed">
             We take your privacy seriously. This policy explains exactly what data we collect, why we collect it, and how we protect it.
           </p>
-          <p className="text-sm text-slate-400 dark:text-slate-500 mt-4">
+          <p className="text-sm text-[#757680] mt-4">
             Last updated: {new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
           </p>
         </div>
@@ -184,14 +184,14 @@ export default function PrivacyPolicyPage() {
       <div className="max-w-3xl mx-auto px-6 py-16">
 
         {/* Quick summary */}
-        <div className="mb-12 p-6 rounded-2xl bg-primary/5 border border-primary/20">
-          <h2 className="font-bold text-primary mb-3 flex items-center gap-2">
+        <div className="mb-12 p-6 rounded-xl bg-[#eef0f8] border border-[#c5c6d0]">
+          <h2 className="font-bold text-[#1b2e5e] mb-3 flex items-center gap-2 text-sm">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             The short version
           </h2>
-          <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-300">
+          <ul className="space-y-2 text-sm text-[#45464f]">
             {[
               "We collect only what we need to run the service.",
               "We never sell your data to anyone, ever.",
@@ -200,7 +200,7 @@ export default function PrivacyPolicyPage() {
               "We use industry-standard encryption to protect your information.",
             ].map((item) => (
               <li key={item} className="flex items-start gap-2">
-                <span className="mt-0.5 w-4 h-4 rounded-full bg-primary/20 text-primary flex items-center justify-center shrink-0 text-xs font-bold">✓</span>
+                <span className="mt-0.5 w-4 h-4 rounded-full bg-[#1b2e5e] text-white flex items-center justify-center shrink-0 text-[10px] font-bold">✓</span>
                 {item}
               </li>
             ))}
@@ -211,14 +211,14 @@ export default function PrivacyPolicyPage() {
         <div className="space-y-12">
           {sections.map((section) => (
             <div key={section.title}>
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-5 pb-3 border-b border-slate-100 dark:border-slate-800">
+              <h2 className="text-lg font-bold text-[#1b1b1f] mb-5 pb-3 border-b border-[#c5c6d0]">
                 {section.title}
               </h2>
               <div className="space-y-5">
                 {section.content.map((item) => (
                   <div key={item.subtitle}>
-                    <h3 className="text-sm font-semibold text-primary mb-1.5">{item.subtitle}</h3>
-                    <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">{item.text}</p>
+                    <h3 className="text-sm font-semibold text-[#1b2e5e] mb-1.5">{item.subtitle}</h3>
+                    <p className="text-sm text-[#45464f] leading-relaxed">{item.text}</p>
                   </div>
                 ))}
               </div>
@@ -227,14 +227,14 @@ export default function PrivacyPolicyPage() {
         </div>
 
         {/* Contact box */}
-        <div className="mt-16 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-center">
-          <h3 className="font-bold text-slate-900 dark:text-white mb-2">Have a privacy concern?</h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+        <div className="mt-16 p-6 rounded-xl border border-[#c5c6d0] bg-white shadow-[0px_2px_4px_rgba(27,46,94,0.05)] text-center">
+          <h3 className="font-bold text-[#1b1b1f] mb-2 text-sm">Have a privacy concern?</h3>
+          <p className="text-sm text-[#45464f] mb-4">
             We&apos;re happy to answer any questions about how we handle your data.
           </p>
           <a
             href="mailto:support@Billbuzz.app"
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#1b2e5e] hover:bg-[#011848] text-white rounded-lg text-sm font-semibold transition-colors"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -255,13 +255,13 @@ export default function PrivacyPolicyPage() {
       </div>
 
       {/* Footer */}
-      <footer className="border-t border-slate-100 dark:border-slate-800 py-8 px-6 text-center">
-        <p className="text-sm text-slate-400 dark:text-slate-500">
+      <footer className="border-t border-[#c5c6d0] bg-white py-8 px-6 text-center">
+        <p className="text-sm text-[#757680]">
           © {new Date().getFullYear()} Billbuzz. All rights reserved.
           {" · "}
-          <Link href="/privacy-policy" className="hover:text-primary transition-colors">Privacy Policy</Link>
+          <Link href="/privacy-policy" className="hover:text-[#1b2e5e] transition-colors">Privacy Policy</Link>
           {" · "}
-          <Link href="/terms" className="hover:text-primary transition-colors">Terms of Use</Link>
+          <Link href="/terms" className="hover:text-[#1b2e5e] transition-colors">Terms of Use</Link>
         </p>
       </footer>
     </div>

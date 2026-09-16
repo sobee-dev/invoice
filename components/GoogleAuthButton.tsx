@@ -22,7 +22,7 @@ export default function GoogleAuthButton({ label = "Continue with Google" }: { l
     <button
         type="button"
         onClick={handleGoogleLogin}
-        className="w-full flex items-center justify-center gap-2 p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition font-medium"
+        className="w-full flex items-center justify-center gap-2 p-3 border border-[#c5c6d0] rounded-lg hover:bg-[#f5f3f8] transition font-medium text-[#1b1b1f]"
       >
         <FcGoogle className="h-5 w-5" /> Google
       </button>

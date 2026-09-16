@@ -26,12 +26,11 @@ export default function ReceiptsPage() {
       const data = await getReceipts();
       setReceipts(data);
 
-      // Auto-open the most recent month
       if (data.length > 0) {
         const mostRecent = data.reduce((a, b) =>
           a.receiptDate > b.receiptDate ? a : b
         );
-        const monthKey = mostRecent.receiptDate?.slice(0, 7); // "YYYY-MM"
+        const monthKey = mostRecent.receiptDate?.slice(0, 7);
         if (monthKey) setOpenMonths(new Set([monthKey]));
       }
 
@@ -69,8 +68,6 @@ export default function ReceiptsPage() {
     }
   };
 
-  // ── Filter + Sort + Group ───────────────────────────────────────────
-
   const grouped = useMemo(() => {
     const filtered = receipts.filter((r) => {
       const q = search.trim().toLowerCase();
@@ -94,7 +91,6 @@ export default function ReceiptsPage() {
       return sortOrder === "asc" ? cmp : -cmp;
     });
 
-    // Group by "YYYY-MM"
     const map = new Map<string, Receipt[]>();
     for (const r of sorted) {
       const key = r.receiptDate?.slice(0, 7) ?? "Unknown";
@@ -102,37 +98,36 @@ export default function ReceiptsPage() {
       map.get(key)!.push(r);
     }
 
-    // Sort month keys descending (most recent first)
     return Array.from(map.entries()).sort(([a], [b]) => (a > b ? -1 : 1));
   }, [receipts, search, sortKey, sortOrder]);
-
-  // ───────────────────────────────────────────────────────────────────
 
   if (loading) return <Loader />;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
 
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">All Invoices</h1>
-          <p className="text-sm text-slate-500">{receipts.length} total receipts</p>
+          <h1 className="text-2xl font-bold text-[#1b1b1f] tracking-tight">All Invoices</h1>
+          <p className="text-xs text-[#757680] mt-0.5">
+            {receipts.length} total receipt{receipts.length !== 1 ? "s" : ""}
+          </p>
         </div>
       </div>
 
-      {/* Search + Sort Controls */}
+      {/* Search + Sort */}
       <div className="flex flex-col sm:flex-row gap-3">
 
         {/* Search */}
         <div className="relative flex-1">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#757680]" />
           <input
             type="text"
             placeholder="Search by customer or invoice number..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full pl-9 pr-4 h-11 rounded-lg border border-[#dee2e6] bg-white text-sm text-[#1b1b1f] placeholder:text-[#757680] focus:outline-none focus:border-[#1b2e5e] transition-colors"
           />
         </div>
 
@@ -140,47 +135,43 @@ export default function ReceiptsPage() {
         <div className="flex gap-2">
           <button
             onClick={() => toggleSort("date")}
-            className={`flex items-center gap-1.5 px-3 h-10 rounded-xl border text-sm font-medium transition-colors ${
+            className={`flex items-center gap-1.5 px-3 h-11 rounded-lg border text-sm font-medium transition-colors ${
               sortKey === "date"
-                ? "bg-blue-600 text-white border-blue-600"
-                : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-blue-400"
+                ? "bg-[#1b2e5e] text-white border-[#1b2e5e]"
+                : "bg-white border-[#c5c6d0] text-[#45464f] hover:border-[#1b2e5e]/40"
             }`}
           >
             <Calendar size={14} />
             Date
-            {sortKey === "date" && (
-              <ArrowUpDown size={12} className="opacity-70" />
-            )}
+            {sortKey === "date" && <ArrowUpDown size={12} className="opacity-70" />}
           </button>
 
           <button
             onClick={() => toggleSort("customerName")}
-            className={`flex items-center gap-1.5 px-3 h-10 rounded-xl border text-sm font-medium transition-colors ${
+            className={`flex items-center gap-1.5 px-3 h-11 rounded-lg border text-sm font-medium transition-colors ${
               sortKey === "customerName"
-                ? "bg-blue-600 text-white border-blue-600"
-                : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-blue-400"
+                ? "bg-[#1b2e5e] text-white border-[#1b2e5e]"
+                : "bg-white border-[#c5c6d0] text-[#45464f] hover:border-[#1b2e5e]/40"
             }`}
           >
             <User size={14} />
             Name
-            {sortKey === "customerName" && (
-              <ArrowUpDown size={12} className="opacity-70" />
-            )}
+            {sortKey === "customerName" && <ArrowUpDown size={12} className="opacity-70" />}
           </button>
         </div>
       </div>
 
       {/* Empty State */}
       {grouped.length === 0 && (
-        <div className="py-20 text-center text-slate-400">
-          <ReceiptText size={40} className="mx-auto mb-3 opacity-30" />
-          <p className="font-medium">No invoices found</p>
-          {search && <p className="text-sm mt-1">Try a different search term</p>}
+        <div className="py-20 text-center text-[#757680]">
+          <ReceiptText size={36} className="mx-auto mb-3 opacity-25" />
+          <p className="font-medium text-sm">No invoices found</p>
+          {search && <p className="text-xs mt-1">Try a different search term</p>}
         </div>
       )}
 
       {/* Monthly Groups */}
-      <div className="space-y-4">
+      <div className="space-y-3">
         {grouped.map(([monthKey, monthReceipts]) => {
           const isOpen = openMonths.has(monthKey);
           const monthTotal = monthReceipts.reduce((s, r) => s + r.grandTotal, 0);
@@ -188,49 +179,49 @@ export default function ReceiptsPage() {
           return (
             <div
               key={monthKey}
-              className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden"
+              className="bg-white rounded-xl border border-[#c5c6d0] shadow-[0px_2px_4px_rgba(27,46,94,0.05)] overflow-hidden"
             >
-              {/* Month Header — clickable to collapse */}
+              {/* Month Header */}
               <button
                 onClick={() => toggleMonth(monthKey)}
-                className="w-full flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                className="w-full flex items-center justify-between px-5 py-4 hover:bg-[#f5f3f8] transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <span className="font-bold text-slate-900 dark:text-white">
+                  <span className="font-semibold text-[#1b1b1f] text-sm">
                     {formatMonthLabel(monthKey)}
                   </span>
-                  <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+                  <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#efedf2] text-[#45464f]">
                     {monthReceipts.length} invoice{monthReceipts.length !== 1 ? "s" : ""}
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  <span className="text-sm font-semibold text-[#1b1b1f]">
                     {formatAmount(monthTotal)}
                   </span>
                   <ChevronDown
-                    size={16}
-                    className={`text-slate-400 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+                    size={15}
+                    className={`text-[#757680] transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
                   />
                 </div>
               </button>
 
               {/* Receipt Rows */}
               {isOpen && (
-                <div className="divide-y divide-slate-100 dark:divide-slate-800 border-t border-slate-100 dark:border-slate-800">
+                <div className="divide-y divide-[#e9ecef] border-t border-[#c5c6d0]">
                   {monthReceipts.map((r) => (
                     <div
                       key={r.id}
-                      className="p-4 flex justify-between items-center hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                      className="px-5 py-4 flex justify-between items-center min-h-14 hover:bg-[#f5f3f8] transition-colors"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                          <ReceiptText size={16} className="text-slate-500" />
+                        <div className="p-2 bg-[#efedf2] rounded-lg">
+                          <ReceiptText size={15} className="text-[#45464f]" />
                         </div>
                         <div>
-                          <p className="font-medium text-slate-900 dark:text-white text-sm">
+                          <p className="font-medium text-[#1b1b1f] text-sm">
                             {r.customerName || "Walk-in"}
                           </p>
-                          <p className="text-xs text-slate-400">
+                          <p className="text-xs text-[#757680]">
                             {r.receiptNumber} · {r.receiptDate}
                           </p>
                         </div>
@@ -238,14 +229,14 @@ export default function ReceiptsPage() {
 
                       <div className="flex items-center gap-3">
                         <div className="text-right">
-                          <p className="font-bold text-sm text-slate-900 dark:text-white">
+                          <p className="font-semibold text-sm text-[#1b1b1f]">
                             {formatAmount(r.grandTotal)}
                           </p>
                           <span
-                            className={`text-[10px] font-medium uppercase tracking-wide ${
+                            className={`inline-block mt-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider ${
                               r.isPaid
-                                ? "text-emerald-500"
-                                : "text-amber-500"
+                                ? "bg-emerald-50 text-emerald-700"
+                                : "bg-amber-50 text-amber-700"
                             }`}
                           >
                             {r.isPaid ? "Paid" : "Unpaid"}
@@ -253,10 +244,10 @@ export default function ReceiptsPage() {
                         </div>
                         <button
                           onClick={() => router.push(`/preview/${r.id}`)}
-                          className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 rounded-lg transition-colors"
+                          className="p-2 text-[#757680] hover:text-[#1b2e5e] hover:bg-[#eef0f8] rounded-lg transition-colors"
                           title="View Receipt"
                         >
-                          <Eye size={16} />
+                          <Eye size={15} />
                         </button>
                       </div>
                     </div>

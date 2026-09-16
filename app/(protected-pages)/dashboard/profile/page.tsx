@@ -1,53 +1,65 @@
 "use client";
 
 import { useDashboardData } from "@/context/DashboardContext";
-import { User, Mail, Shield, LogOut, Calendar } from "lucide-react";
-import { performLogout } from "@/lib/auth-utils"; // We'll create this utility below
+import { User, Mail, Shield, LogOut } from "lucide-react";
+import { performLogout } from "@/lib/auth-utils";
 
 export default function ProfilePage() {
   const { user, loading } = useDashboardData();
 
-  if (loading) return <div className="p-8 animate-pulse text-slate-500">Loading profile...</div>;
+  if (loading) {
+    return (
+      <div className="p-8 text-sm text-[#757680] animate-pulse">
+        Loading profile...
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto space-y-5">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Account Profile</h1>
-        <p className="text-slate-500">Manage your personal information and security.</p>
+        <h1 className="text-2xl font-bold text-[#1b1b1f] tracking-tight">Account Profile</h1>
+        <p className="text-sm text-[#45464f] mt-0.5">Manage your personal information and security.</p>
       </div>
 
       {/* Profile Card */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
-        <div className="h-32 bg-linear-to-r from-blue-600 to-indigo-600"></div>
-        <div className="px-8 pb-8">
-          <div className="relative -top-12 flex items-end gap-6">
-            <div className="w-24 h-24 rounded-2xl bg-white dark:bg-slate-800 p-1 shadow-lg">
-              <div className="w-full h-full rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-blue-600">
-                <User size={48} />
+      <div className="bg-white rounded-xl border border-[#c5c6d0] shadow-[0px_2px_4px_rgba(27,46,94,0.05)] overflow-hidden">
+        {/* Header Banner */}
+        <div className="h-28 bg-gradient-to-r from-[#1b2e5e] to-[#011848]" />
+
+        <div className="px-6 pb-6">
+          <div className="relative -top-10 flex items-end gap-5">
+            <div className="w-20 h-20 rounded-xl bg-white border border-[#c5c6d0] p-1 shadow-[0px_4px_8px_rgba(27,46,94,0.10)]">
+              <div className="w-full h-full rounded-lg bg-[#eef0f8] flex items-center justify-center text-[#1b2e5e]">
+                <User size={40} />
               </div>
             </div>
-            <div className="mb-2">
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+            <div className="mb-1">
+              <h2 className="text-lg font-bold text-[#1b1b1f] tracking-tight">
                 {user?.email?.split('@')[0] || "User"}
               </h2>
-              <p className="text-sm text-slate-500">Individual Account</p>
+              <p className="text-xs text-[#757680]">Individual Account</p>
             </div>
           </div>
 
-          <div className="grid gap-6 mt-4">
-            <div className="flex items-center gap-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
-              <Mail className="text-slate-400" size={20} />
+          <div className="grid gap-3 -mt-4">
+            <div className="flex items-center gap-4 p-4 rounded-xl bg-[#f5f3f8] border border-[#e9e7ec]">
+              <Mail className="text-[#757680] shrink-0" size={18} />
               <div>
-                <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">Email Address</p>
-                <p className="text-slate-900 dark:text-white font-medium">{user?.email}</p>
+                <p className="text-xs font-semibold text-[#757680] uppercase tracking-wider">
+                  Email Address
+                </p>
+                <p className="text-sm text-[#1b1b1f] font-medium mt-0.5">{user?.email}</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
-              <Shield className="text-slate-400" size={20} />
+            <div className="flex items-center gap-4 p-4 rounded-xl bg-[#f5f3f8] border border-[#e9e7ec]">
+              <Shield className="text-[#757680] shrink-0" size={18} />
               <div>
-                <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">Account ID</p>
-                <p className="text-slate-900 dark:text-white font-mono text-sm">{user?.id || "N/A"}</p>
+                <p className="text-xs font-semibold text-[#757680] uppercase tracking-wider">
+                  Account ID
+                </p>
+                <p className="text-sm text-[#1b1b1f] font-mono mt-0.5">{user?.id || "N/A"}</p>
               </div>
             </div>
           </div>
@@ -55,16 +67,16 @@ export default function ProfilePage() {
       </div>
 
       {/* Danger Zone */}
-      <div className="bg-red-50 dark:bg-red-900/10 rounded-2xl border border-red-100 dark:border-red-900/30 p-6">
-        <h3 className="text-red-800 dark:text-red-400 font-bold mb-2">Danger Zone</h3>
-        <p className="text-red-600 dark:text-red-500/80 text-sm mb-4">
-          Logging out will clear your local session and any unsynced data will be lost.
+      <div className="bg-[#ffdad6] rounded-xl border border-[#f9b4ae] p-5">
+        <h3 className="text-[#93000a] font-bold text-sm mb-1">Danger Zone</h3>
+        <p className="text-[#ba1a1a] text-xs mb-4 leading-relaxed">
+          Logging out will clear your local session. Any unsynced data will be lost.
         </p>
-        <button 
+        <button
           onClick={performLogout}
-          className="flex items-center justify-center gap-2 px-6 py-2 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition-colors shadow-md shadow-red-200 dark:shadow-none"
+          className="flex items-center gap-2 px-5 py-2.5 bg-[#ba1a1a] hover:bg-[#93000a] text-white rounded-lg text-sm font-semibold transition-colors shadow-sm"
         >
-          <LogOut size={18} />
+          <LogOut size={16} />
           Sign Out of Everything
         </button>
       </div>

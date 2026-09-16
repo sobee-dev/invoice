@@ -2,26 +2,21 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Mail, Lock, Eye, EyeOff } from 'lucide-react'; 
-import { FcGoogle } from "react-icons/fc";
+import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import Loader from '@/components/Loader';
-import  api  from '@/lib/axios';
+import api from '@/lib/axios';
 import { performInitialSync } from '@/lib/sync';
 import { useRouter } from "next/navigation";
 import GoogleAuthButton from '@/components/GoogleAuthButton';
 
-
 export default function LoginPage() {
-  
   const router = useRouter();
-  // State
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
 
-  // Validation Logic
   const validateForm = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
@@ -39,29 +34,24 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
-    
+
     setIsLoading(true);
     setError("");
- 
+
     try {
-      const response = await api.post("/api/users/login/",{ email, password });
-      console.log("Full Response:", response);
+      const response = await api.post("/api/users/login/", { email, password });
       const data = response.data;
       const token = data.access;
       const refreshToken = data.refresh;
-      
-      if (token && refreshToken) {
-      localStorage.setItem('token', token);
-      localStorage.setItem('refreshToken', refreshToken);
-    }
-      console.log("Starting sync...");
-      await performInitialSync(data); 
-      console.log("Sync finished.");
-    
-      window.location.replace("/dashboard");
 
+      if (token && refreshToken) {
+        localStorage.setItem('token', token);
+        localStorage.setItem('refreshToken', refreshToken);
+      }
+
+      await performInitialSync(data);
+      window.location.replace("/dashboard");
     } catch (error: any) {
-      console.error("Caught error:", error);
       const serverMessage = error.response?.data?.detail || error.response?.data?.message;
       setError(serverMessage || "Login failed. Please check your credentials.");
     } finally {
@@ -69,88 +59,98 @@ export default function LoginPage() {
     }
   };
 
-
-
-  if (isLoading) {return <Loader />}
+  if (isLoading) return <Loader />;
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="text-center">
-        <h2 className="text-3xl font-extrabold text-gray-900">Welcome Back</h2>
-        <p className="mt-2 text-sm text-gray-600">Please enter your details to sign in</p>
+        <h2 className="text-2xl font-bold text-[#1b1b1f] tracking-tight">Welcome Back</h2>
+        <p className="mt-1.5 text-sm text-[#45464f]">Enter your details to sign in</p>
       </div>
 
       <form className="space-y-4" onSubmit={handleLogin}>
+        {/* Error */}
         {error && (
-          <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg border border-red-100">
+          <div className="p-3 text-sm text-[#ba1a1a] bg-[#ffdad6] rounded-lg border border-[#f9b4ae]">
             {error}
           </div>
         )}
 
+        {/* Email */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">Email</label>
-          <div className="mt-1 relative">
-            <Mail className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
-            <input 
-              type="email" 
-              required 
+          <label className="block text-xs font-semibold text-[#45464f] uppercase tracking-wider mb-1.5">
+            Email
+          </label>
+          <div className="relative">
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#757680]" />
+            <input
+              type="email"
+              required
               value={email}
-              onChange={(e) => setEmail(e.target.value)} 
-              className="pl-10 w-full p-2.5 border text-gray-600 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#002395] outline-none" 
-              placeholder="you@example.com" 
+              onChange={(e) => setEmail(e.target.value)}
+              className="pl-10 w-full h-12 px-4 border border-[#dee2e6] text-[#1b1b1f] rounded-lg focus:border-[#1b2e5e] focus:outline-none transition-colors"
+              placeholder="you@example.com"
             />
           </div>
         </div>
 
+        {/* Password */}
         <div>
-          <div className="flex items-center justify-between">
-            <label className="block text-sm font-medium text-gray-700">Password</label>
-            <Link href="/forgot-password"  className="text-xs font-semibold hover:underline text-blue-500" >
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="block text-xs font-semibold text-[#45464f] uppercase tracking-wider">
+              Password
+            </label>
+            <Link
+              href="/forgot-password"
+              className="text-xs font-semibold text-[#1b2e5e] hover:underline"
+            >
               Forgot password?
             </Link>
           </div>
-          <div className="mt-1 relative">
-            <Lock className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#757680]" />
             <input
               type={showPassword ? "text" : "password"}
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="pl-10 pr-10 w-full text-gray-600 p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#002395] outline-none"
+              className="pl-10 pr-10 w-full h-12 px-4 border border-[#dee2e6] text-[#1b1b1f] rounded-lg focus:border-[#1b2e5e] focus:outline-none transition-colors"
               placeholder="••••••••"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600 focus:outline-none"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#757680] hover:text-[#45464f]"
             >
-              {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
         </div>
 
+        {/* Submit */}
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full bg-primary text-white p-3 rounded-lg font-bold hover:opacity-90 transition shadow-md flex items-center justify-center gap-2 min-h-[50px]"
+          className="w-full h-12 bg-[#1b2e5e] hover:bg-[#011848] text-white rounded-lg font-semibold transition-colors shadow-[0px_2px_4px_rgba(27,46,94,0.15)] flex items-center justify-center gap-2"
         >
-           Log In
+          Log In
         </button>
-
-        
-
       </form>
 
-      <div className="relative my-6 text-center">
-        <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-gray-200"></span></div>
-        <span className="relative px-2 bg-white text-sm text-gray-500">Or continue with Google</span>
+      {/* Divider */}
+      <div className="relative text-center">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t border-[#c5c6d0]"></span>
+        </div>
+        <span className="relative px-3 bg-white text-xs text-[#757680]">Or continue with Google</span>
       </div>
 
       <GoogleAuthButton label="Continue with Google" />
 
-      <p className="text-center text-sm text-gray-600">
+      <p className="text-center text-sm text-[#45464f]">
         Don&apos;t have an account?{" "}
-        <Link href="/register" className="font-bold hover:underline " >
+        <Link href="/register" className="font-semibold text-[#1b2e5e] hover:underline">
           Register
         </Link>
       </p>

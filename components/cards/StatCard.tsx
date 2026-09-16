@@ -12,38 +12,42 @@ interface StatCardProps {
   iconClassName?: string;
 }
 
-export default function StatCard({ 
-  title, 
-  value, 
-  icon, 
-  trend, 
+export default function StatCard({
+  title,
+  value,
+  icon,
+  trend,
   className,
-  iconClassName 
+  iconClassName,
 }: StatCardProps) {
   return (
-    <div className={cn(
-      "bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md",
-      className
-    )}>
+    <div
+      className={cn(
+        "bg-white p-5 rounded-xl border border-[#c5c6d0] shadow-[0px_2px_4px_rgba(27,46,94,0.05)] transition-shadow hover:shadow-[0px_4px_8px_rgba(27,46,94,0.08)]",
+        className
+      )}
+    >
       <div className="flex justify-between items-start mb-4">
-        <div className={cn(
-          "p-2 bg-slate-50 dark:bg-slate-800 rounded-xl",
-          iconClassName
-        )}>
+        <div
+          className={cn(
+            "p-2 bg-[#f5f3f8] rounded-lg",
+            iconClassName
+          )}
+        >
           {icon}
         </div>
       </div>
-      
+
       <div>
-        <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
+        <p className="text-xs font-semibold text-[#757680] uppercase tracking-widest">
           {title}
         </p>
-        <h4 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
+        <h4 className="text-2xl font-bold text-[#1b1b1f] mt-1 tracking-tight">
           {value}
         </h4>
-        
+
         {trend && (
-          <p className="text-xs text-slate-400 dark:text-slate-500 mt-2 flex items-center gap-1">
+          <p className="text-xs text-[#757680] mt-2">
             {trend}
           </p>
         )}

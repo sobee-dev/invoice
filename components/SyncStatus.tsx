@@ -10,8 +10,8 @@ export function SyncStatusIndicator() {
 
   if (isSyncing) {
     return (
-      <div className="flex items-center gap-2 text-blue-500 text-sm font-medium animate-pulse">
-        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+      <div className="flex items-center gap-2 text-[#1b2e5e] text-sm font-medium animate-pulse">
+        <div className="w-2 h-2 bg-[#1b2e5e] rounded-full"></div>
         Syncing...
       </div>
     );

@@ -20,24 +20,21 @@ export default function PostReceiptInstallPrompt({ onDismiss }: Props) {
       <div className="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6">
         
         <div className="flex justify-center mb-4">
-          <div
-            className="w-16 h-16 rounded-2xl flex items-center justify-center"
-            style={{ backgroundColor: "#002395" }}
-          >
+          <div className="w-16 h-16 rounded-2xl bg-[#1b2e5e] flex items-center justify-center">
             <img src="/icons/icon-192x192.png" alt="BillBuzz" className="w-12 h-12 rounded-xl" />
           </div>
         </div>
 
-        <h2 className="text-lg font-bold text-gray-900 text-center mb-1">
+        <h2 className="text-lg font-bold text-[#1b1b1f] text-center mb-1">
           You just created your first receipt 🎉
         </h2>
-        <p className="text-sm text-gray-500 text-center mb-6">
+        <p className="text-sm text-[#45464f] text-center mb-6">
           Install BillBuzz for faster access and offline receipt creation — no browser needed.
         </p>
 
         {isIOS ? (
-          <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-4">
-            <p className="text-sm text-blue-800 text-center leading-relaxed">
+          <div className="bg-[#eef0f8] border border-[#c5c6d0] rounded-xl p-4 mb-4">
+            <p className="text-sm text-[#1b2e5e] text-center leading-relaxed">
               Tap <strong>Share</strong> at the bottom of your browser, then select{" "}
               <strong>Add to Home Screen</strong>
             </p>
@@ -45,8 +42,7 @@ export default function PostReceiptInstallPrompt({ onDismiss }: Props) {
         ) : (
           <button
             onClick={handleInstall}
-            className="w-full h-12 rounded-xl text-white font-bold mb-3"
-            style={{ backgroundColor: "#002395" }}
+            className="w-full h-12 rounded-xl bg-[#1b2e5e] hover:bg-[#011848] text-white font-bold mb-3 transition-colors"
           >
             📲 Install BillBuzz
           </button>
@@ -54,7 +50,7 @@ export default function PostReceiptInstallPrompt({ onDismiss }: Props) {
 
         <button
           onClick={onDismiss}
-          className="w-full h-10 text-sm text-gray-400 hover:text-gray-600"
+          className="w-full h-10 text-sm text-[#757680] hover:text-[#45464f] transition-colors"
         >
           Maybe later
         </button>

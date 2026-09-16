@@ -21,10 +21,10 @@ export function SignaturePad({ onDrawEnd }: { onDrawEnd: (blob: Blob) => void })
         canvasProps={{ className: "w-full h-40 cursor-crosshair" }}
       />
       <div className="flex gap-2 mt-2">
-        <button type="button" onClick={() => ref.current?.clear()} className="text-xs text-gray-500">
+        <button type="button" onClick={() => ref.current?.clear()} className="text-xs text-[#757680] hover:text-[#45464f] transition-colors">
           Clear
         </button>
-        <button type="button" onClick={handleDone} className="text-xs bg-blue-600 text-white px-2 py-1 rounded">
+        <button type="button" onClick={handleDone} className="text-xs bg-[#1b2e5e] hover:bg-[#011848] text-white px-2 py-1 rounded transition-colors">
           Done Drawing
         </button>
       </div>

@@ -244,15 +244,15 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
   )}
 
   return (
-    <div className="min-h-screen bg-slate-100 dark:bg-slate-900">
+    <div className="min-h-screen bg-[#efedf2]">
       {/* Header */}
-      <div className="print:hidden sticky top-0 z-50 flex items-center justify-between border-b border-slate-200/80 bg-white/80 p-4 backdrop-blur-sm dark:border-slate-800/80 dark:bg-slate-900/80">
-        <button onClick={() => router.back()} className="p-2 -ml-2 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
+      <div className="print:hidden sticky top-0 z-50 flex items-center justify-between border-b border-[#c5c6d0] bg-white/90 p-4 backdrop-blur-sm">
+        <button onClick={() => router.back()} className="p-2 -ml-2 text-[#45464f] hover:text-[#1b1b1f] transition-colors">
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+        <h2 className="text-base font-bold text-[#1b1b1f]">
           {isDraft ? "Preview" : `${receipt.receiptNumber}`}
         </h2>
         <div className="w-10" />
@@ -278,13 +278,22 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
       </div>
 
       {/* Footer Actions */}
-      <div className="print:hidden fixed bottom-0 left-0 right-0 p-4 mt-12 backdrop-blur-sm border-t border-slate-200 dark:border-slate-800">
+      <div className="print:hidden fixed bottom-0 left-0 right-0 p-4 backdrop-blur-sm bg-white/90 border-t border-[#c5c6d0]">
         <div className="max-w-2xl mx-auto flex flex-col gap-3">
-          <div className="flex gap-4">
+          <div className="flex gap-3">
             {isDraft ? (
               <>
-                <button onClick={() => router.back()} className="flex-1 h-12 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-900 dark:white font-semibold">Edit</button>
-                <button onClick={handleSaveDraft} disabled={saving} className="flex-1 h-12 rounded-lg bg-blue-600 text-white font-semibold disabled:opacity-50">
+                <button
+                  onClick={() => router.back()}
+                  className="flex-1 h-12 rounded-lg border border-[#c5c6d0] text-[#1b1b1f] text-sm font-semibold hover:bg-[#f5f3f8] transition-colors"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={handleSaveDraft}
+                  disabled={saving}
+                  className="flex-1 h-12 rounded-lg bg-[#1b2e5e] hover:bg-[#011848] text-white text-sm font-semibold disabled:opacity-50 transition-colors shadow-[0px_2px_4px_rgba(27,46,94,0.15)]"
+                >
                   {saving ? "Saving..." : "Save Receipt"}
                 </button>
               </>
@@ -292,25 +301,54 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
               <>
                 {!preparedFiles ? (
                   <>
-                    <button onClick={handlePrepareAll} disabled={isPreparing} className="flex-2 h-12 rounded-lg border border-slate-300 dark:border-slate-600 dark:text-white text-black font-bold flex items-center justify-center gap-2">
-                      {isPreparing ? <Loader /> : "Share"}
+                    <button
+                      onClick={handlePrepareAll}
+                      disabled={isPreparing}
+                      className="flex-1 h-12 rounded-lg border border-[#c5c6d0] text-[#1b1b1f] text-sm font-semibold hover:bg-[#f5f3f8] transition-colors flex items-center justify-center gap-2"
+                    >
+                      {isPreparing ? <Loader /> : "Share / Download"}
                     </button>
-                    <button onClick={handlePrint} className="flex-1 h-12 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white font-semibold">Print</button>
+                    <button
+                      onClick={handlePrint}
+                      className="flex-1 h-12 rounded-lg border border-[#c5c6d0] text-[#1b1b1f] text-sm font-semibold hover:bg-[#f5f3f8] transition-colors"
+                    >
+                      Print
+                    </button>
                   </>
                 ) : (
                   <div className="flex flex-col w-full gap-3">
                     <div className="flex gap-3">
-                      <button onClick={() => handleExecuteShare(preparedFiles.image)} className="flex-1 h-12 rounded-lg bg-green-600 text-white font-bold shadow-lg animate-pulse">🚀 Send As Image</button>
-                      <button onClick={() => handleExecuteShare(preparedFiles.pdf)} className="flex-1 h-12 rounded-lg bg-slate-900 text-white font-bold shadow-lg animate-pulse">🚀 Send As PDF</button>
+                      <button
+                        onClick={() => handleExecuteShare(preparedFiles.image)}
+                        className="flex-1 h-12 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold shadow-md transition-colors"
+                      >
+                        🚀 Send as Image
+                      </button>
+                      <button
+                        onClick={() => handleExecuteShare(preparedFiles.pdf)}
+                        className="flex-1 h-12 rounded-lg bg-[#1b2e5e] hover:bg-[#011848] text-white text-sm font-bold shadow-md transition-colors"
+                      >
+                        🚀 Send as PDF
+                      </button>
                     </div>
-                    <button onClick={() => setPreparedFiles(null)} className="text-xs text-slate-500 underline">Cancel</button>
+                    <button
+                      onClick={() => setPreparedFiles(null)}
+                      className="text-xs text-[#757680] underline"
+                    >
+                      Cancel
+                    </button>
                   </div>
                 )}
               </>
             )}
           </div>
           {!isDraft && (
-            <button onClick={() => router.replace("/dashboard")} className="w-full h-10 text-sm text-slate-500">Back to Dashboard</button>
+            <button
+              onClick={() => router.replace("/dashboard")}
+              className="w-full h-10 text-xs text-[#757680] hover:text-[#45464f] transition-colors"
+            >
+              Back to Dashboard
+            </button>
           )}
         </div>
       </div>

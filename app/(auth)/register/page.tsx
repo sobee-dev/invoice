@@ -1,8 +1,8 @@
 "use client";
+
 import { useState } from 'react';
 import Link from 'next/link';
-import { Mail, Lock, Eye, EyeOff } from 'lucide-react'; 
-import { FcGoogle } from 'react-icons/fc';
+import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import Loader from '@/components/Loader';
 import api from '@/lib/axios';
 import { performInitialSync } from '@/lib/sync';
@@ -10,16 +10,13 @@ import { useRouter } from 'next/navigation';
 import GoogleAuthButton from '@/components/GoogleAuthButton';
 
 export default function RegisterPage() {
-  
   const router = useRouter();
-  // State
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
-  
-  // Validation Logic
+
   const validateForm = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
@@ -35,122 +32,124 @@ export default function RegisterPage() {
   };
 
   const handleRegister = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!validateForm()) return;
+    e.preventDefault();
+    if (!validateForm()) return;
 
-  setIsLoading(true);
-  setError('');
+    setIsLoading(true);
+    setError('');
 
-  try {
-  
-    
-    const response = await api.post("/api/users/register/",{ email, password });
-        const data = response.data;
-        
-        if (response.status === 201) {
-          localStorage.setItem('token', data.tokens.access);
-          localStorage.setItem('refreshToken', data.tokens.refresh);
-            
-          await performInitialSync(data);
+    try {
+      const response = await api.post("/api/users/register/", { email, password });
+      const data = response.data;
 
-          window.location.replace("/dashboard");
-        } else {
-          throw new Error("No tokens received from server");
-        }
-      } catch (error: any) {
-        console.error("Registration detail:", error.response?.data);
+      if (response.status === 201) {
+        localStorage.setItem('token', data.tokens.access);
+        localStorage.setItem('refreshToken', data.tokens.refresh);
 
-        const serverMessage = 
-          error.response?.data?.email?.[0] || // Common Django/DRF error format
-          error.response?.data?.detail || 
-          error.response?.data?.message || 
-          "An error occurred during registration.";
-        
-        setError(serverMessage);
-      } finally {
-        setIsLoading(false);
+        await performInitialSync(data);
+        window.location.replace("/dashboard");
+      } else {
+        throw new Error("No tokens received from server");
       }
-    };
+    } catch (error: any) {
+      const serverMessage =
+        error.response?.data?.email?.[0] ||
+        error.response?.data?.detail ||
+        error.response?.data?.message ||
+        "An error occurred during registration.";
+      setError(serverMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  if (isLoading) return <Loader />;
 
-  
-
-  if (isLoading) {return <Loader />}
-  
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="text-center">
-        <h2 className="text-3xl font-extrabold text-gray-900">Get Started</h2>
-        <p className="mt-2 text-sm text-gray-600">Create your free account today</p>
+        <h2 className="text-2xl font-bold text-[#1b1b1f] tracking-tight">Get Started</h2>
+        <p className="mt-1.5 text-sm text-[#45464f]">Create your free account today</p>
       </div>
 
       <form className="space-y-4" onSubmit={handleRegister}>
+        {/* Error */}
         {error && (
-          <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg border border-red-100">
+          <div className="p-3 text-sm text-[#ba1a1a] bg-[#ffdad6] rounded-lg border border-[#f9b4ae]">
             {error}
           </div>
         )}
 
+        {/* Email */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">Email</label>
-          <div className="mt-1 relative">
-            <Mail className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
-            <input 
-              type="email" 
-              required 
+          <label className="block text-xs font-semibold text-[#45464f] uppercase tracking-wider mb-1.5">
+            Email
+          </label>
+          <div className="relative">
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#757680]" />
+            <input
+              type="email"
+              required
               value={email}
-              onChange={(e) => setEmail(e.target.value)} 
-              className="pl-10 w-full p-2.5 border text-gray-600 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#002395] outline-none" 
-              placeholder="you@example.com" 
+              onChange={(e) => setEmail(e.target.value)}
+              className="pl-10 w-full h-12 px-4 border border-[#dee2e6] text-[#1b1b1f] rounded-lg focus:border-[#1b2e5e] focus:outline-none transition-colors"
+              placeholder="you@example.com"
             />
           </div>
         </div>
 
+        {/* Password */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">Password</label>
-          <div className="mt-1 relative">
-            <Lock className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
+          <label className="block text-xs font-semibold text-[#45464f] uppercase tracking-wider mb-1.5">
+            Password
+          </label>
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#757680]" />
             <input
               type={showPassword ? "text" : "password"}
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="pl-10 pr-10 w-full p-2.5 border text-gray-600 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#002395] outline-none"
-              placeholder="••••••••"
+              className="pl-10 pr-10 w-full h-12 px-4 border border-[#dee2e6] text-[#1b1b1f] rounded-lg focus:border-[#1b2e5e] focus:outline-none transition-colors"
+              placeholder="Min. 6 characters"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600 focus:outline-none"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#757680] hover:text-[#45464f]"
             >
-              {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
         </div>
+
+        {/* Submit */}
         <button
           type="submit"
           disabled={isLoading}
-          
-          className="w-full text-white bg-primary p-3 rounded-lg font-bold hover:opacity-90 transition shadow-md flex items-center justify-center gap-2"
+          className="w-full h-12 bg-[#1b2e5e] hover:bg-[#011848] text-white rounded-lg font-semibold transition-colors shadow-[0px_2px_4px_rgba(27,46,94,0.15)] flex items-center justify-center gap-2"
         >
-           Register
-        </button>        
-
+          Create Account
+        </button>
       </form>
 
-      <div className="relative my-6 text-center">
-        <span className="text-sm text-gray-500">Sign up with Google for faster access</span>
+      {/* Divider */}
+      <div className="relative text-center">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t border-[#c5c6d0]"></span>
+        </div>
+        <span className="relative px-3 bg-white text-xs text-[#757680]">Or sign up with Google</span>
       </div>
 
-     <GoogleAuthButton label="Continue with Google" />
+      <GoogleAuthButton label="Continue with Google" />
 
-      <p className="text-center text-sm text-gray-600">
+      <p className="text-center text-sm text-[#45464f]">
         Already have an account?{" "}
-        <Link href="/login" className="font-bold hover:underline " >
+        <Link href="/login" className="font-semibold text-[#1b2e5e] hover:underline">
           Log in
         </Link>
       </p>
-      
     </div>
   );
 }

@@ -1,0 +1,1232 @@
+# BillBuzz v2 — Frontend Build Reference
+
+> **For developers and AI agents building the frontend.**
+> Every screen is listed in build order. Each entry covers: what the screen does,
+> what it renders, every API call it makes, role restrictions, and edge/empty states.
+>
+> **Stack:** Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS · Axios  
+> **Backend base URL:** `NEXT_PUBLIC_BASE_URL` (e.g. `http://localhost:8000`)  
+> **Auth:** Bearer token in `Authorization` header, stored in `localStorage` as `token`  
+> **All new features are online-only.** No Dexie, no outbox, no service-worker sync.
+
+---
+
+## Table of Contents
+
+1. [Auth — Login](#1-auth--login)
+2. [Auth — Register](#2-auth--register)
+3. [Auth — Forgot Password](#3-auth--forgot-password)
+4. [Auth — Reset Password](#4-auth--reset-password)
+5. [Auth — Google OAuth Callback](#5-auth--google-oauth-callback)
+6. [Onboarding — Business Info](#6-onboarding--business-info)
+7. [Onboarding — Template Selection](#7-onboarding--template-selection)
+8. [Dashboard — Owner](#8-dashboard--owner)
+9. [Dashboard — Staff](#9-dashboard--staff)
+10. [Documents — List](#10-documents--list)
+11. [Documents — Create](#11-documents--create)
+12. [Documents — Detail / Actions](#12-documents--detail--actions)
+13. [Products — List](#13-products--list)
+14. [Products — Create](#14-products--create)
+15. [Products — Detail](#15-products--detail)
+16. [Customers — List](#16-customers--list)
+17. [Customers — Create](#17-customers--create)
+18. [Customers — Detail](#18-customers--detail)
+19. [Inventory — Overview](#19-inventory--overview)
+20. [Reports](#20-reports)
+21. [Staff — List](#21-staff--list)
+22. [Staff — Create](#22-staff--create)
+23. [Staff — Detail](#23-staff--detail)
+24. [Profile](#24-profile)
+25. [Settings](#25-settings)
+26. [Receipts — List (Legacy)](#26-receipts--list-legacy)
+27. [New Receipt (Legacy)](#27-new-receipt-legacy)
+28. [Receipt Preview (Legacy)](#28-receipt-preview-legacy)
+
+---
+
+## Global Rules
+
+### Layout
+- All screens under `/dashboard/*` share the dashboard layout: **Sidebar** (left) + **top bar** (right — user avatar, notifications).
+- Sidebar links are role-aware:
+  - **All roles:** Dashboard, Receipts, Documents, Customers, Products
+  - **Owner only:** Inventory, Reports, Staff
+- Auth screens (`/login`, `/register`, etc.) use the minimal auth layout — no sidebar.
+- Onboarding screens use their own full-screen centered layout.
+
+### Role Check Pattern
+```typescript
+const { isOwner, isStaff } = useDashboard(); // from DashboardContext
+// owner-only pages: redirect to /dashboard if isStaff
+// staff-only pages: redirect to /dashboard if isOwner
+```
+
+### API Call Pattern
+```typescript
+// Every page fetches on mount
+const [data, setData] = useState(null);
+const [loading, setLoading] = useState(true);
+const [error, setError] = useState(null);
+
+useEffect(() => {
+  axios.get('/api/endpoint/')
+    .then(res => setData(res.data))
+    .catch(err => setError(err))
+    .finally(() => setLoading(false));
+}, []);
+```
+
+### Pagination
+All list endpoints use **cursor-based pagination**.  
+Response shape: `{ results: [...], next: "cursor_url", previous: "cursor_url" }`  
+UI: "Load more" button or infinite scroll — use the `next` URL to fetch the next page.
+
+### Empty States
+Every list page must render a friendly empty state (illustration + CTA button) when `results.length === 0`.
+
+### Error States
+Every page must handle: network error (show retry button) and 401 (auto-redirect to `/login` via axios interceptor).
+
+---
+
+## 1. Auth — Login
+
+**Route:** `/login`  
+**File:** `app/(auth)/login/page.tsx`  
+**Access:** Public (redirect to `/dashboard` if already authenticated)
+
+### What It Does
+Entry point for returning users. Supports email/password and Google OAuth.
+
+### UI Components
+- Email input
+- Password input (with show/hide toggle)
+- "Remember me" checkbox
+- Submit button ("Sign In")
+- Google OAuth button (`<GoogleAuthButton />`)
+- Link to `/register`
+- Link to `/forgot-password`
+- Error message banner (invalid credentials)
+
+### API Calls
+```
+POST /api/users/login/
+  body:    { email, password }
+  success: { access, refresh, user: { id, email, role }, business }
+  error:   400 → show "Invalid email or password"
+```
+
+### On Success
+1. Save `access` → `localStorage.setItem('token', access)`
+2. Save `refresh` → `localStorage.setItem('refreshToken', refresh)`
+3. If `business === null` or `business.onboarding_complete === false` → redirect `/onboarding`
+4. Else → redirect `/dashboard`
+
+### States
+| State | UI |
+|---|---|
+| Loading | Spinner on submit button, inputs disabled |
+| Error | Red banner below the form |
+| Success | Redirect (no visible state) |
+
+---
+
+## 2. Auth — Register
+
+**Route:** `/register`  
+**File:** `app/(auth)/register/page.tsx`  
+**Access:** Public (redirect to `/dashboard` if already authenticated)
+
+### What It Does
+Creates a new owner account. Staff accounts are created by owners from the Staff section.
+
+### UI Components
+- Email input
+- Password input
+- Confirm password input
+- Submit button ("Create Account")
+- Google OAuth button
+- Link to `/login`
+- Inline field-level validation errors
+
+### API Calls
+```
+POST /api/users/register/
+  body:    { email, password1, password2 }
+  success: { access, refresh, user, business: null }
+  error:   400 → show field errors (e.g. "Password too short")
+```
+
+### On Success
+Same as Login → redirect to `/onboarding` (business is null for new users).
+
+---
+
+## 3. Auth — Forgot Password
+
+**Route:** `/forgot-password`  
+**File:** `app/(auth)/forgot-password/page.tsx`  
+**Access:** Public
+
+### What It Does
+Lets user request a password reset email.
+
+### UI Components
+- Email input
+- Submit button ("Send Reset Link")
+- Success message: "Check your email for a reset link"
+- Link back to `/login`
+
+### API Calls
+```
+POST /api/users/change_password/
+  body: { email }
+```
+
+> **Note:** Confirm with backend team the exact reset-request endpoint. May need a dedicated `/api/users/request-password-reset/` endpoint if not yet built.
+
+---
+
+## 4. Auth — Reset Password
+
+**Route:** `/reset-password`  
+**File:** `app/(auth)/reset-password/page.tsx`  
+**Access:** Public (token passed as query param `?token=xxx`)
+
+### What It Does
+Lets user set a new password after clicking the link in their email.
+
+### UI Components
+- New password input
+- Confirm new password input
+- Submit button ("Reset Password")
+- Success state → link to `/login`
+
+### API Calls
+```
+POST /api/users/reset-password-confirm/
+  body: { token, new_password1, new_password2 }
+```
+
+---
+
+## 5. Auth — Google OAuth Callback
+
+**Route:** `/oauth/callback`  
+**File:** `app/(auth)/oauth/callback/page.tsx`  
+**Access:** Public (Google redirects here with `?code=xxx`)
+
+### What It Does
+Receives the OAuth `code` from Google, exchanges it for JWT tokens, then redirects the user.
+
+### UI Components
+- Full-screen loading spinner ("Signing you in…")
+- Error state ("Something went wrong — try again") with link to `/login`
+
+### API Calls
+```
+POST /api/auth/google/callback/
+  body:    { code }           ← read from URL query param
+  success: { access, refresh, user, business, is_new }
+  error:   400/401 → show error state
+```
+
+### On Success
+Same logic as Login success (check `business` + `onboarding_complete`).  
+If `is_new === true` → redirect to `/onboarding`.
+
+---
+
+## 6. Onboarding — Business Info
+
+**Route:** `/onboarding`  
+**File:** `app/(protected)/onboarding/page.tsx`  
+**Access:** Authenticated, only if `business.onboarding_complete === false`
+
+### What It Does
+Step 1 of 2. Collects the owner's business details.
+
+### UI Components
+- Progress indicator (Step 1 of 2)
+- Business name input (required)
+- Business email input
+- Phone number input
+- Address line 1 + Address line 2 inputs
+- Registration number input
+- Currency selector (dropdown)
+- Tax rate input (percentage) + Tax enabled toggle
+- Logo upload (image picker → Cloudinary direct upload → preview thumbnail)
+- Signature type selector: None / Text / Draw
+  - If Text: signature text input
+  - If Draw: `<SignaturePad />` canvas → upload blob to Cloudinary
+- Brand colour pickers: Primary + Secondary
+- "Continue" button
+
+### API Calls
+```
+GET  /api/business/me/
+  → prefill form if business already partially created
+
+Cloudinary direct upload (logo/signature):
+POST https://api.cloudinary.com/v1_1/{NEXT_PUBLIC_CLOUDINARY_CLOUD}/image/upload
+  body: FormData { file, upload_preset: NEXT_PUBLIC_CLOUDINARY_PRESET }
+  returns: { secure_url }   ← store this, send to backend
+
+PATCH /api/business/me/
+  body: {
+    name, email, phone, address_one, address_two,
+    registration_number, currency, tax_rate, tax_enabled,
+    logo_url, signature_type, signature_text, signature_url,
+    brand_color_one, brand_color_two
+  }
+```
+
+### Validation
+- Name is required
+- If `signature_type === 'text'` → `signature_text` required
+- If `signature_type === 'image'` → signature must be drawn
+- Phone: 7–15 digits
+
+### On Success
+Redirect to `/onboarding/template`.
+
+---
+
+## 7. Onboarding — Template Selection
+
+**Route:** `/onboarding/template`  
+**File:** `app/(protected)/onboarding/template/page.tsx`  
+**Access:** Authenticated, only during onboarding
+
+### What It Does
+Step 2 of 2. Owner picks a receipt/invoice template.
+
+### UI Components
+- Progress indicator (Step 2 of 2)
+- 3 template cards: Classic, Modern, Compact — each shows a preview thumbnail
+- Selected card has a highlighted border
+- "Finish Setup" button
+
+### API Calls
+```
+PATCH /api/business/me/
+  body: { selected_template_id: 'classic' | 'modern' | 'compact' }
+
+POST /api/business/{id}/complete-onboarding/
+  body: {}
+  → sets onboarding_complete = true
+```
+
+### On Success
+Redirect to `/dashboard`.
+
+---
+
+## 8. Dashboard — Owner
+
+**Route:** `/dashboard`  
+**File:** `app/(protected)/dashboard/page.tsx`  
+**Access:** Owner role (`user.role === 'owner'`)
+
+### What It Does
+Central overview of the business. Shows revenue, outstanding amounts, inventory health, and recent documents.
+
+### UI Components
+- **Stat cards (top row):**
+  - Monthly Revenue (total confirmed + delivered sales invoices this month)
+  - Outstanding Receivables (total unpaid sales invoices)
+  - Inventory Value (sum of `quantity_on_hand × unit_price` across all products)
+  - Low Stock Alerts (count of products where `is_low_stock === true`)
+- **Recent Documents table** (last 5, any type)
+  - Columns: Number, Type, Customer, Date, Status, Amount, Payment Status
+  - Row click → `/dashboard/documents/{id}`
+- **Quick action buttons:** New Document, New Product, New Customer
+
+### API Calls
+```
+GET /api/reports/dashboard/
+  response: {
+    monthly_revenue,
+    outstanding_receivables,
+    inventory_value,
+    low_stock_count
+  }
+
+GET /api/documents/?cursor=&page_size=5
+  → recent 5 documents for the table
+```
+
+### States
+| State | UI |
+|---|---|
+| Loading | Skeleton cards + skeleton table rows |
+| Error | Retry banner |
+| Empty (no documents yet) | Welcome card + "Create your first invoice" CTA |
+
+---
+
+## 9. Dashboard — Staff
+
+**Route:** `/dashboard`  
+**File:** `app/(protected)/dashboard/page.tsx` (same file, different render branch)  
+**Access:** Staff role (`user.role === 'staff'`)
+
+### What It Does
+Personal performance overview for the logged-in staff member.
+
+### UI Components
+- **Stat cards:**
+  - Documents Created (by this staff member)
+  - Revenue Generated (grand total of their confirmed/delivered documents)
+  - Avg Transaction Value
+- **Recent Documents table** (last 5 created by this staff member)
+- **Quick action:** New Document
+
+### API Calls
+```
+GET /api/staff/me/dashboard/
+  response: {
+    documents_created,
+    revenue_generated,
+    avg_transaction_value
+  }
+
+GET /api/documents/?cursor=&page_size=5
+  → backend automatically scopes to created_by=request.user for staff
+```
+
+---
+
+## 10. Documents — List
+
+**Route:** `/dashboard/documents`  
+**File:** `app/(protected)/dashboard/documents/page.tsx`  
+**Access:** All authenticated users (staff sees only their own documents)
+
+### What It Does
+Lists all documents with filtering by type, status, and payment status.
+
+### UI Components
+- **Filter bar:**
+  - Type tabs or dropdown: All / Sales Invoice / Purchase Invoice / Proforma Invoice
+  - Status filter: All / Draft / Confirmed / Delivered / Cancelled
+  - Payment filter: All / Unpaid / Partial / Paid / Overpaid
+  - Customer search/filter
+- **Document table:**
+  - Columns: Number, Type, Customer/Supplier, Date, Status (badge), Payment (badge), Amount
+  - Row click → `/dashboard/documents/{id}`
+- **"New Document" button** (top right) → `/dashboard/documents/new`
+- **Pagination:** "Load more" button
+
+### API Calls
+```
+GET /api/documents/
+  query params (all optional):
+    ?document_type=sales_invoice | purchase_invoice | proforma_invoice
+    ?status=draft | confirmed | delivered | cancelled
+    ?payment_status=unpaid | partial | paid | overpaid
+    ?customer={uuid}
+    ?cursor={cursor}
+```
+
+### Empty State
+"No documents found" with CTA to create one.
+
+---
+
+## 11. Documents — Create
+
+**Route:** `/dashboard/documents/new`  
+**File:** `app/(protected)/dashboard/documents/new/page.tsx`  
+**Access:** All authenticated users
+
+### What It Does
+Creates a new document (sales invoice, purchase invoice, or proforma invoice). Online only — requires server connection to load products and customers.
+
+### UI Components
+- **Document type selector** (top of form — changing type adjusts visible fields):
+  - Sales Invoice | Purchase Invoice | Proforma Invoice
+- **Document metadata:**
+  - Document number (auto-suggested, editable)
+  - Document date (date picker, defaults to today)
+- **Customer section** (sales invoice / proforma):
+  - Customer search/select (autocomplete from `/api/customers/`) OR free-text name
+  - Customer email, phone (auto-filled if customer selected)
+- **Supplier section** (purchase invoice only):
+  - Supplier name input
+- **Line items table:**
+  - Each row: Product picker (optional) | Description | Qty | Unit Price | Total (auto-calc)
+  - "Add item" button appends a new empty row
+  - Trash icon removes a row
+  - If product selected from picker → auto-fill description + unit price
+- **Totals panel (right or bottom):**
+  - Subtotal (sum of item totals)
+  - Tax rate (prefilled from business settings, editable)
+  - Tax amount (calculated)
+  - Discount input
+  - Grand Total (bold)
+- **Save as Draft** button + **Save & Confirm** button
+
+### API Calls
+```
+GET /api/customers/?search=&page_size=20
+  → customer autocomplete dropdown
+
+GET /api/products/?is_active=true&search=
+  → product picker autocomplete
+
+POST /api/documents/
+  body: {
+    document_type,
+    document_number,
+    document_date,
+    customer_name,
+    customer_email,
+    customer_phone,
+    customer,              ← uuid (optional, if selected from list)
+    supplier_name,         ← purchase invoices only
+    subtotal,
+    tax_rate,
+    tax_amount,
+    discount,
+    grand_total,
+    items: [
+      {
+        product,           ← uuid or null
+        description,
+        quantity,
+        unit_price,
+        total
+      }
+    ]
+  }
+  success: { id, ... }
+  → redirect to /dashboard/documents/{id}
+```
+
+### Validation
+- At least 1 line item required
+- Grand total must equal `subtotal + tax_amount - discount` (±0.01)
+- Document number must be filled
+
+---
+
+## 12. Documents — Detail / Actions
+
+**Route:** `/dashboard/documents/[id]`  
+**File:** `app/(protected)/dashboard/documents/[id]/page.tsx`  
+**Access:** All authenticated users (staff only sees documents they created)
+
+### What It Does
+Displays a full document. All lifecycle actions are triggered from this page.
+
+### UI Components
+- **Document header:** Number, Type badge, Status badge, Date
+- **Customer / Supplier info block**
+- **Line items table** (read-only unless DRAFT status)
+- **Totals panel**
+- **Payment info:** Payment status badge, Amount paid, Paid at
+- **Timeline / history** (optional, shows status changes)
+- **Action buttons** — contextual based on current status:
+
+| Current Status | Available Actions |
+|---|---|
+| DRAFT | Edit · Confirm · Cancel · Delete |
+| CONFIRMED (Sales Invoice) | Deliver · Deduct Inventory · Cancel |
+| CONFIRMED (Purchase Invoice) | Deliver · Cancel |
+| CONFIRMED (Proforma) | Deliver · Cancel |
+| DELIVERED (Sales Invoice) | Deduct Inventory · Mark Paid |
+| DELIVERED (Purchase Invoice) | Add to Inventory · Mark Paid |
+| DELIVERED (Proforma) | Mark Paid |
+| CANCELLED | (no actions) |
+
+- **Deduct Inventory modal** (Sales Invoice only):
+  - Option A: "Subtract All" — one click
+  - Option B: Per-item table with quantity inputs
+  - Confirm button
+
+### API Calls
+```
+GET  /api/documents/{id}/
+
+PATCH /api/documents/{id}/           ← edit (DRAFT only)
+
+POST /api/documents/{id}/confirm/
+POST /api/documents/{id}/deliver/
+POST /api/documents/{id}/cancel/
+POST /api/documents/{id}/mark-paid/
+DELETE /api/documents/{id}/          ← soft delete
+
+POST /api/documents/{id}/deduct-inventory/
+  body: { subtract_all: true }
+  OR:   { items: [{ item_id, quantity }] }
+
+POST /api/documents/{id}/add-to-inventory/
+  body: {}
+```
+
+### States
+| State | UI |
+|---|---|
+| Loading | Full-page skeleton |
+| 404 | "Document not found" with back button |
+| Action in progress | Button spinner, others disabled |
+| Action success | Toast notification + status badge updates |
+| Action error (e.g. insufficient stock) | Error toast with backend message |
+
+---
+
+## 13. Products — List
+
+**Route:** `/dashboard/products`  
+**File:** `app/(protected)/dashboard/products/page.tsx`  
+**Access:** All authenticated users
+
+### What It Does
+Shows the business product/item catalog with stock levels.
+
+### UI Components
+- **Search bar** (name or SKU)
+- **Active filter toggle:** Active / Inactive / All
+- **Product table or card grid:**
+  - Columns: Name, SKU, Unit Price, In Stock, Reserved, Available, Low Stock indicator
+  - Low stock row highlighted in amber if `is_low_stock === true`
+  - Row click → `/dashboard/products/{id}`
+- **"Add Product" button** → `/dashboard/products/new`
+
+### API Calls
+```
+GET /api/products/
+  query: ?search=&is_active=true&cursor=
+```
+
+### Empty State
+"No products yet" + "Add your first product" button.
+
+---
+
+## 14. Products — Create
+
+**Route:** `/dashboard/products/new`  
+**File:** `app/(protected)/dashboard/products/new/page.tsx`  
+**Access:** All authenticated users
+
+### What It Does
+Adds a new product to the catalog.
+
+### UI Components
+- Name input (required)
+- SKU input (required, unique per business — show inline error if duplicate)
+- Description textarea
+- Unit price input
+- Opening stock (quantity_on_hand) input
+- Reorder level input (optional — triggers low stock alert)
+- Product image upload → Cloudinary direct upload → preview
+- "Save Product" button
+
+### API Calls
+```
+Cloudinary direct upload (optional image):
+POST https://api.cloudinary.com/v1_1/{cloud}/image/upload
+  returns: { secure_url }
+
+POST /api/products/
+  body: {
+    name,
+    sku,
+    description,
+    unit_price,
+    quantity_on_hand,
+    reorder_level,   ← optional
+    image_url        ← optional, from Cloudinary
+  }
+  success: { id, ... }
+  → redirect to /dashboard/products/{id}
+```
+
+---
+
+## 15. Products — Detail
+
+**Route:** `/dashboard/products/[id]`  
+**File:** `app/(protected)/dashboard/products/[id]/page.tsx`  
+**Access:** All authenticated users
+
+### What It Does
+Shows full product details, current stock levels, and complete inventory transaction history.
+
+### UI Components
+- **Product header:** Name, SKU, Status badge (Active/Inactive)
+- **Stock summary cards:**
+  - On Hand
+  - Reserved
+  - Available to Sell (`on_hand - reserved`)
+  - Reorder Level
+- **Edit form** (inline or modal): name, SKU, price, reorder level, image
+- **"Deactivate" button** (owner only — hidden for staff)
+- **Inventory Transaction History table:**
+  - Columns: Date, Type, Quantity Change (+/-), Reference Document, Initiated By
+  - Colour-coded: green for additions, red for deductions
+  - Paginated ("Load more")
+
+### API Calls
+```
+GET /api/products/{id}/
+
+PATCH /api/products/{id}/
+  body: partial product fields
+
+POST /api/products/{id}/deactivate/    ← owner only
+
+GET /api/inventory/products/{id}/history/
+  query: ?cursor=
+  response: paginated InventoryTransaction list
+```
+
+---
+
+## 16. Customers — List
+
+**Route:** `/dashboard/customers`  
+**File:** `app/(protected)/dashboard/customers/page.tsx`  
+**Access:** All authenticated users
+
+### What It Does
+Directory of all business customers.
+
+### UI Components
+- **Search bar** (name, email, or phone)
+- **Status filter:** Active / Inactive / All
+- **Customer table:**
+  - Columns: Name, Email, Phone, Business Name, Outstanding Balance, Status badge
+  - Row click → `/dashboard/customers/{id}`
+- **"Add Customer" button** → `/dashboard/customers/new`
+
+### API Calls
+```
+GET /api/customers/
+  query: ?search=&status=active&cursor=
+```
+
+---
+
+## 17. Customers — Create
+
+**Route:** `/dashboard/customers/new`  
+**File:** `app/(protected)/dashboard/customers/new/page.tsx`  
+**Access:** All authenticated users
+
+### What It Does
+Creates a new customer record.
+
+### UI Components
+- First name + Last name inputs (required)
+- Email input (optional)
+- Phone input (optional)
+- Business name input (for B2B customers)
+- Payment method preference dropdown (Cash, Bank Transfer, Card, etc.)
+- Notes textarea
+- Tags input (comma-separated or tag chips)
+- "Save Customer" button
+
+### API Calls
+```
+POST /api/customers/
+  body: {
+    first_name,
+    last_name,
+    email,
+    phone,
+    business_name,
+    payment_method_preference,
+    notes,
+    tags: []
+  }
+  success: { id, ... }
+  → redirect to /dashboard/customers/{id}
+```
+
+---
+
+## 18. Customers — Detail
+
+**Route:** `/dashboard/customers/[id]`  
+**File:** `app/(protected)/dashboard/customers/[id]/page.tsx`  
+**Access:** All authenticated users
+
+### What It Does
+Full customer profile with all linked documents.
+
+### UI Components
+- **Customer header:** Full name, Business name, Status badge
+- **Contact info block:** Email, Phone, Payment preference, Notes, Tags
+- **Stats row:** Outstanding Balance, Lifetime Value (sum of paid invoices)
+- **Edit form** (inline or "Edit" modal)
+- **Status actions:** "Deactivate" or "Reactivate" button (toggle based on current status)
+- **Linked Documents table:**
+  - All documents where `customer = this customer`
+  - Columns: Number, Type, Date, Status, Amount, Payment Status
+  - Row click → `/dashboard/documents/{id}`
+
+### API Calls
+```
+GET /api/customers/{id}/
+
+PATCH /api/customers/{id}/
+  body: partial customer fields
+
+POST /api/customers/{id}/deactivate/
+POST /api/customers/{id}/reactivate/
+
+GET /api/documents/?customer={id}&cursor=
+```
+
+---
+
+## 19. Inventory — Overview
+
+**Route:** `/dashboard/inventory`  
+**File:** `app/(protected)/dashboard/inventory/page.tsx`  
+**Access:** Owner only (redirect staff to `/dashboard`)
+
+### What It Does
+Bird's-eye view of all product stock levels. Read-only. Clicking a product goes to its detail page where the full transaction history lives.
+
+### UI Components
+- **Summary bar (top):**
+  - Total inventory value (`Σ quantity_on_hand × unit_price`)
+  - Products in stock / Total products
+  - Low stock count (highlighted in amber)
+- **Filter:** All / Low Stock / Out of Stock
+- **Inventory table:**
+  - Columns: Product, SKU, On Hand, Reserved, Available, Unit Price, Stock Value, Reorder Level, Status
+  - Low stock rows highlighted amber
+  - Out of stock rows highlighted red
+  - Row click → `/dashboard/products/{id}` (which has the full transaction history)
+- **No "Add" button** — inventory only changes via document actions
+
+### API Calls
+```
+GET /api/products/?is_active=true&cursor=
+  response includes: quantity_on_hand, quantity_reserved,
+                     available_to_sell, is_low_stock (computed)
+```
+
+### Empty State
+"No products in your catalog yet" + link to `/dashboard/products/new`.
+
+---
+
+## 20. Reports
+
+**Route:** `/dashboard/reports`  
+**File:** `app/(protected)/dashboard/reports/page.tsx`  
+**Access:** Owner only (redirect staff to `/dashboard`)
+
+### What It Does
+Financial and operational summary of the business.
+
+### UI Components
+- **Top stat cards:**
+  - Monthly Revenue (confirmed + delivered sales invoices, current month)
+  - Outstanding Receivables (sum of unpaid sales invoice amounts)
+  - Total Inventory Value
+  - Low Stock Products count
+- **Unpaid Invoices table:**
+  - All sales invoices with `payment_status=unpaid`
+  - Columns: Number, Customer, Date, Amount, Days Outstanding
+  - Row click → `/dashboard/documents/{id}`
+- **Delivered Documents table:**
+  - Columns: Number, Type, Date, Amount, Payment Status
+- **Low Stock Products list:**
+  - Product name, SKU, On Hand, Reorder Level, shortfall
+
+### API Calls
+```
+GET /api/reports/dashboard/
+  response: {
+    monthly_revenue,
+    outstanding_receivables,
+    inventory_value,
+    low_stock_count
+  }
+
+GET /api/documents/?payment_status=unpaid&document_type=sales_invoice&cursor=
+  → unpaid invoices table
+
+GET /api/documents/?status=delivered&cursor=
+  → delivered documents table
+
+GET /api/products/?is_active=true&cursor=
+  → filter client-side for is_low_stock === true
+```
+
+---
+
+## 21. Staff — List
+
+**Route:** `/dashboard/staff`  
+**File:** `app/(protected)/dashboard/staff/page.tsx`  
+**Access:** Owner only
+
+### What It Does
+Owner manages their team members.
+
+### UI Components
+- **Staff table:**
+  - Columns: Name, Email, Department, Permission Level, Status badge, Joined
+  - Row click → `/dashboard/staff/{id}`
+- **"Add Staff Member" button** → `/dashboard/staff/new`
+
+### API Calls
+```
+GET /api/staff/
+  → list all StaffMembers linked to this business
+```
+
+### Empty State
+"No staff members yet" + CTA to add first.
+
+---
+
+## 22. Staff — Create
+
+**Route:** `/dashboard/staff/new`  
+**File:** `app/(protected)/dashboard/staff/new/page.tsx`  
+**Access:** Owner only
+
+### What It Does
+Invites a new staff member by creating their user account and linking them to the business.
+
+### UI Components
+- Email input (required)
+- Password input (temporary, staff can change later)
+- Department input (optional)
+- Permission level dropdown: Full Access / Limited Access
+- "Create Staff Member" button
+
+### API Calls
+```
+POST /api/users/register/
+  body: { email, password1, password2, role: 'staff' }
+  response: { user: { id, email } }
+
+POST /api/staff/
+  body: {
+    user: {user_id},
+    department,
+    permission_level: 'full_access' | 'limited_access'
+  }
+  → redirect to /dashboard/staff/{staffmember_id}
+```
+
+---
+
+## 23. Staff — Detail
+
+**Route:** `/dashboard/staff/[id]`  
+**File:** `app/(protected)/dashboard/staff/[id]/page.tsx`  
+**Access:** Owner only
+
+### What It Does
+Shows a staff member's profile, their activity, and lets the owner manage their access.
+
+### UI Components
+- **Staff header:** Name, Email, Status badge
+- **Info block:** Department, Permission Level, Joined date
+- **Edit form:** Department + Permission Level (inline)
+- **Status toggle:** "Deactivate" / "Reactivate" button
+- **Performance stats:**
+  - Documents Created
+  - Revenue Generated
+  - Avg Transaction Value
+- **Recent Documents table:** Last 10 documents created by this staff member
+
+### API Calls
+```
+GET /api/staff/{id}/
+
+PATCH /api/staff/{id}/
+  body: { department, permission_level, status }
+
+GET /api/documents/?created_by={user_id}&cursor=
+  → documents created by this staff member
+```
+
+---
+
+## 24. Profile
+
+**Route:** `/dashboard/profile`  
+**File:** `app/(protected)/dashboard/profile/page.tsx`  
+**Access:** All authenticated users (each user sees their own)
+
+### What It Does
+Lets the user update their personal preferences and change their password.
+
+### UI Components
+- **Account info:** Email (read-only), Role badge (read-only)
+- **Preferences form:**
+  - Default currency dropdown
+  - Email notifications toggle
+  - Push notifications toggle
+- **Change Password section:**
+  - Current password input
+  - New password input
+  - Confirm new password input
+- **Save buttons** (separate for preferences and password)
+- **Logout button** (with confirmation modal)
+
+### API Calls
+```
+GET /api/users/me/
+
+PATCH /api/users/{id}/
+  body: { default_currency, email_notifications, push_notifications }
+
+POST /api/users/change_password/
+  body: { old_password, new_password1, new_password2 }
+
+POST /api/users/logout/
+  body: { refresh }   ← invalidates refresh token on server
+```
+
+---
+
+## 25. Settings
+
+**Route:** `/dashboard/settings`  
+**File:** `app/(protected)/dashboard/settings/page.tsx`  
+**Access:** Owner only for business fields; staff can view only
+
+### What It Does
+Business configuration — branding, tax, signature, template.
+
+### UI Components
+- **Business Info section:**
+  - Name, Description, Email, Phone, Address, Registration number
+- **Branding section:**
+  - Logo upload (Cloudinary) + preview
+  - Brand colour 1 + Brand colour 2 (colour pickers)
+  - Template selector (Classic / Modern / Compact) with live preview thumbnail
+- **Financial section:**
+  - Default currency
+  - Tax rate (%)
+  - Tax enabled toggle
+- **Signature section:**
+  - Type selector: None / Text / Draw
+  - If Text: text input
+  - If Draw: `<SignaturePad />` canvas + upload to Cloudinary
+- **"Save Changes" button**
+
+### API Calls
+```
+GET /api/business/me/
+  → prefill all fields
+
+Cloudinary upload (logo/signature):
+POST https://api.cloudinary.com/v1_1/{cloud}/image/upload
+
+PATCH /api/business/me/
+  body: {
+    name, description, email, phone,
+    address_one, address_two, registration_number,
+    currency, tax_rate, tax_enabled,
+    logo_url, signature_type, signature_text, signature_url,
+    brand_color_one, brand_color_two,
+    selected_template_id
+  }
+```
+
+---
+
+## 26. Receipts — List (Legacy)
+
+**Route:** `/dashboard/receipts`  
+**File:** `app/(protected)/dashboard/receipts/page.tsx`  
+**Access:** All authenticated users
+
+### What It Does
+Lists all receipts. **Offline logic removed** — data now comes from the server.
+
+### Change from Previous Architecture
+- Previously read from Dexie (`getReceipts()`)
+- **Now:** `GET /api/receipts/`
+
+### UI Components
+- Receipt table: Number, Customer, Date, Amount, Paid badge
+- "New Receipt" button → `/new-receipt`
+- Pagination (cursor-based)
+
+### API Calls
+```
+GET /api/receipts/
+  query: ?cursor=
+```
+
+---
+
+## 27. New Receipt (Legacy)
+
+**Route:** `/new-receipt`  
+**File:** `app/(protected)/(root)/new-receipt/page.tsx`  
+**Access:** All authenticated users
+
+### What It Does
+Creates a new receipt. **Offline logic removed** — saves directly to server.
+
+### Change from Previous Architecture
+- Previously: save to Dexie → outbox → background sync
+- **Now:** `POST /api/receipts/` directly, show loading state while request is in flight
+
+### API Calls
+```
+GET /api/business/me/
+  → replaces getBusiness() from Dexie (prefill template, logo, signature)
+
+GET /api/receipts/?cursor=&page_size=1
+  → get last receipt to derive next receipt number
+
+POST /api/receipts/
+  body: {
+    receipt_number,
+    receipt_date,
+    customer_name,
+    customer_phone,
+    customer_email,
+    subtotal,
+    tax_rate,
+    tax_amount,
+    discount,
+    grand_total,
+    notes,
+    items: [{ description, quantity, unit_price, total }]
+  }
+  success: { id, ... }
+  → redirect to /preview/{id}
+```
+
+---
+
+## 28. Receipt Preview (Legacy)
+
+**Route:** `/preview/[id]`  
+**File:** `app/(protected)/(root)/preview/[id]/page.tsx`  
+**Access:** All authenticated users
+
+### What It Does
+Displays a receipt using the business template. Allows export and sharing.
+
+### Change from Previous Architecture
+- Previously read receipt + items from Dexie
+- **Now:** `GET /api/receipts/{id}/`
+- Draft preview (`id='draft'`) from sessionStorage remains unchanged
+
+### API Calls
+```
+GET /api/receipts/{id}/
+  → replaces getReceiptWithItems() from Dexie
+
+POST /api/receipts/{id}/mark-paid/   ← if marking paid from preview
+  → replaces Dexie markReceiptPaid()
+
+POST /api/generate    ← Next.js internal route (keep as-is)
+  body: { html, type: 'pdf' | 'image' }
+  → Puppeteer renders HTML to PDF/PNG blob
+```
+
+---
+
+## Appendix A — DashboardContext Shape (Updated)
+
+```typescript
+interface DashboardContextType {
+  user: {
+    id: string;
+    email: string;
+    role: 'owner' | 'staff' | 'admin';
+    default_currency: string;
+    email_notifications: boolean;
+    push_notifications: boolean;
+  } | null;
+  business: Business | null;
+  loading: boolean;
+  initialized: boolean;
+  isOwner: boolean;   // shorthand: user?.role === 'owner'
+  isStaff: boolean;   // shorthand: user?.role === 'staff'
+  refreshData: () => Promise<void>;
+  clearData: () => void;   // logout helper
+}
+```
+
+**On app load:** `GET /api/users/me/` → populates `user` + `business`.  
+**Token refresh:** Same as before — setTimeout scheduled at `exp - 300s`, calls `POST /api/users/token/refresh/`.
+
+---
+
+## Appendix B — Removed Files Checklist
+
+Before building, delete (or empty) these files to avoid confusion:
+
+```
+lib/db.ts
+lib/sync.ts
+lib/syncToServer.ts
+lib/repositories/receiptRepo.ts
+lib/repositories/businessRepo.ts
+components/SyncStatus.tsx
+components/InstallBanner.tsx
+components/SidebarInstallButton.tsx
+components/PostReceiptInstallPrompt.tsx
+context/PWAContext.tsx
+```
+
+Remove from `next.config.ts`:
+```typescript
+// Remove the withPWA wrapper and its config entirely
+// Replace with plain nextConfig export
+```
+
+Remove `next-pwa` from `package.json` dependencies.
+
+---
+
+## Appendix C — New Files to Create
+
+```
+lib/api/auth.ts
+lib/api/business.ts
+lib/api/documents.ts
+lib/api/products.ts
+lib/api/customers.ts
+lib/api/inventory.ts
+lib/api/reports.ts
+lib/api/staff.ts
+lib/api/receipts.ts       ← online version replacing receiptRepo.ts
+```
+
+Each file exports typed `async` functions that wrap `axios` calls.  
+Example pattern:
+
+```typescript
+// lib/api/documents.ts
+import axios from '@/lib/axios';
+import { Document, DocumentItem } from '@/lib/types';
+
+export const getDocuments = (params = {}) =>
+  axios.get('/api/documents/', { params }).then(r => r.data);
+
+export const getDocument = (id: string) =>
+  axios.get(`/api/documents/${id}/`).then(r => r.data);
+
+export const createDocument = (body: Partial<Document>) =>
+  axios.post('/api/documents/', body).then(r => r.data);
+
+export const confirmDocument = (id: string) =>
+  axios.post(`/api/documents/${id}/confirm/`).then(r => r.data);
+
+export const deductInventory = (id: string, body: object) =>
+  axios.post(`/api/documents/${id}/deduct-inventory/`, body).then(r => r.data);
+
+// ... and so on for every action
+```

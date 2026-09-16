@@ -25,19 +25,14 @@ export default function DashboardPage() {
   }, []);
 
   // ── Derived stats ────────────────────────────────────────────────
-
   const today = new Date().toISOString().split('T')[0];
 
-  // All-time
   const totalRevenue = receipts.reduce((sum, r) => sum + r.grandTotal, 0);
 
-  // Today only
   const todaysReceipts = receipts.filter(r => r.receiptDate === today);
   const todaysRevenue = todaysReceipts.reduce((sum, r) => sum + r.grandTotal, 0);
   const todaysInvoiceCount = todaysReceipts.length;
 
-  // Unique customers by name across all receipts — excludes walk-ins
- // All customer names from receipts before today
   const existingCustomers = new Set(
     receipts
       .filter(r => r.receiptDate?.split('T')[0] !== today)
@@ -45,7 +40,6 @@ export default function DashboardPage() {
       .filter(Boolean)
   );
 
-  // Today's customers who are NOT in the historical set
   const newCustomersToday = new Set(
     todaysReceipts
       .map(r => r.customerName?.trim().toLowerCase())
@@ -64,113 +58,105 @@ export default function DashboardPage() {
 
   // ─────────────────────────────────────────────────────────────────
 
-  if (contextLoading || statsLoading) {return <Loader/>};
+  if (contextLoading || statsLoading) return <Loader />;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
 
       {/* Welcome Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+          <h1 className="text-2xl font-bold text-[#1b1b1f] tracking-tight">
             Hello, {user?.email.split('@')[0]} 👋
           </h1>
-          <p className="text-slate-500">
-            Here is what is happening with {business?.name} today.
+          <p className="text-sm text-[#45464f] mt-0.5">
+            Here&apos;s what&apos;s happening with {business?.name} today.
           </p>
         </div>
 
         <button
           onClick={() => router.push("/new-receipt")}
-          className="flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 dark:shadow-none"
+          className="flex items-center justify-center gap-2 px-5 py-3 bg-[#1b2e5e] hover:bg-[#011848] text-white rounded-lg font-semibold transition-colors shadow-[0px_2px_4px_rgba(27,46,94,0.15)] text-sm"
         >
-          <Plus size={20} />
+          <Plus size={18} />
           Create Invoice
         </button>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-        {/* Today's revenue — matches the "today" framing of the header */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatCard
           title="Today's Revenue"
           value={formatAmount(todaysRevenue)}
-          icon={<TrendingUp className="text-emerald-600" />}
+          icon={<TrendingUp size={18} className="text-emerald-600" />}
           trend={`${formatAmount(totalRevenue)} all time`}
         />
-
-        {/* Invoices issued today — now actually filtered by today */}
         <StatCard
           title="Invoices Issued Today"
           value={todaysInvoiceCount.toLocaleString()}
-          icon={<ReceiptText className="text-blue-600" />}
+          icon={<ReceiptText size={18} className="text-[#1b2e5e]" />}
           trend={`${receipts.filter(r => r.syncStatus === 'pending').length} pending sync`}
         />
-
-        {/* Unique customers — derived from real data, not a division */}
         <StatCard
           title="New Customers"
           value={uniqueNewCustomers.toLocaleString()}
-          icon={<Users className="text-purple-600" />}
+          icon={<Users size={18} className="text-[#795900]" />}
           trend={`${existingCustomers.size} total customers`}
         />
-
       </div>
 
-      {/* Recent Activity Table */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-        <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
-          <h3 className="font-bold text-slate-900 dark:text-white">Recent Invoices</h3>
+      {/* Recent Activity */}
+      <div className="bg-white rounded-xl border border-[#c5c6d0] shadow-[0px_2px_4px_rgba(27,46,94,0.05)] overflow-hidden">
+        <div className="px-5 py-4 border-b border-[#c5c6d0] flex justify-between items-center">
+          <h3 className="font-semibold text-[#1b1b1f] text-sm">Recent Invoices</h3>
           <button
             onClick={() => router.push("/dashboard/receipts")}
-            className="text-sm text-blue-600 font-medium hover:underline"
+            className="text-xs text-[#1b2e5e] font-semibold hover:underline"
           >
             View All
           </button>
         </div>
 
-        <div className="divide-y divide-slate-100 dark:divide-slate-800">
+        <div className="divide-y divide-[#e9ecef]">
           {receipts.slice(0, 5).map((r) => (
             <div
               key={r.id}
-              className="p-4 flex justify-between items-center hover:bg-slate-50 dark:hover:bg-slate-800/50"
+              className="px-5 py-4 flex justify-between items-center min-h-14 hover:bg-[#f5f3f8] transition-colors"
             >
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                  <ReceiptText size={18} className="text-slate-600" />
+                <div className="p-2 bg-[#efedf2] rounded-lg">
+                  <ReceiptText size={16} className="text-[#45464f]" />
                 </div>
                 <div>
-                  <p className="font-medium text-slate-900 dark:text-white">
+                  <p className="font-medium text-[#1b1b1f] text-sm">
                     {r.customerName || "Walk-in"}
                   </p>
-                  <p className="text-xs text-slate-500">{r.receiptDate}</p>
+                  <p className="text-xs text-[#757680]">{r.receiptDate}</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-4">
-                <p className="font-bold text-slate-900 dark:text-white">
+                <p className="font-semibold text-[#1b1b1f] text-sm">
                   {formatAmount(r.grandTotal)}
                 </p>
                 <button
                   onClick={() => router.push(`/preview/${r.id}`)}
-                  className="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 rounded-lg transition-colors"
+                  className="p-2 text-[#757680] hover:text-[#1b2e5e] hover:bg-[#eef0f8] rounded-lg transition-colors"
                   title="View Receipt"
                 >
-                  <Eye size={18} />
+                  <Eye size={16} />
                 </button>
               </div>
             </div>
           ))}
 
           {receipts.length === 0 && (
-            <p className="p-8 text-center text-slate-400">
+            <p className="px-5 py-10 text-center text-sm text-[#757680]">
               No invoices yet. Create your first one!
             </p>
           )}
         </div>
       </div>
-
     </div>
   );
 }

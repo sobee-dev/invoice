@@ -55,9 +55,9 @@ export default function OAuthCallback() {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-slate-50 dark:bg-slate-900">
-      <div className="w-10 h-10 rounded-full border-4 border-primary border-t-transparent animate-spin" />
-      <p className="text-sm text-slate-500 dark:text-slate-400">
+    <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-[#fbf8fd]">
+      <div className="w-10 h-10 rounded-full border-4 border-[#1b2e5e] border-t-transparent animate-spin" />
+      <p className="text-sm text-[#757680]">
         Signing you in with Google...
       </p>
     </div>

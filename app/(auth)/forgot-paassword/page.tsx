@@ -5,10 +5,10 @@ import Link from 'next/link';
 import { Mail, ArrowLeft } from 'lucide-react';
 import Loader from '@/components/Loader';
 
-export default function ForgotPasswordPage() {
-  const primaryColor = "#002395";
+const inputCls = "h-12 w-full pl-10 pr-4 rounded-lg border border-[#dee2e6] bg-white text-[#1b1b1f] placeholder:text-[#c5c6d0] focus:border-[#1b2e5e] focus:outline-none transition-colors text-sm";
+const labelCls = "block text-xs font-semibold text-[#45464f] uppercase tracking-wider mb-1.5";
 
-  // State
+export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -42,7 +42,6 @@ export default function ForgotPasswordPage() {
         throw new Error(data.detail || data.message || 'Failed to send reset email');
       }
 
-      // Show success message instead of redirecting immediately
       setIsSubmitted(true);
     } catch (error: any) {
       setError(error.message || "Something went wrong. Please try again later.");
@@ -51,24 +50,22 @@ export default function ForgotPasswordPage() {
     }
   };
 
-  // Success View
   if (isSubmitted) {
     return (
       <div className="text-center space-y-6">
         <div className="flex justify-center">
-          <div className="bg-green-100 p-3 rounded-full">
-            <Mail className="h-8 w-8 text-green-600" />
+          <div className="bg-emerald-50 p-3 rounded-full">
+            <Mail className="h-8 w-8 text-emerald-600" />
           </div>
         </div>
-        <h2 className="text-2xl font-bold text-gray-900">Check your email</h2>
-        <p className="text-gray-600">
+        <h2 className="text-2xl font-bold text-[#1b1b1f] tracking-tight">Check your email</h2>
+        <p className="text-sm text-[#45464f]">
           We&apos;ve sent a password reset link to <br />
-          <span className="font-semibold text-gray-900">{email}</span>
+          <span className="font-semibold text-[#1b1b1f]">{email}</span>
         </p>
-        <Link 
-          href="/login" 
-          className="inline-flex items-center gap-2 font-bold hover:underline" 
-          style={{ color: primaryColor }}
+        <Link
+          href="/login"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-[#1b2e5e] hover:text-[#011848] transition-colors"
         >
           <ArrowLeft className="h-4 w-4" /> Back to Login
         </Link>
@@ -79,30 +76,30 @@ export default function ForgotPasswordPage() {
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-3xl font-extrabold text-gray-900">Forgot Password?</h2>
-        <p className="mt-2 text-sm text-gray-600">
+        <h2 className="text-2xl font-bold text-[#1b1b1f] tracking-tight">Forgot Password?</h2>
+        <p className="mt-2 text-sm text-[#45464f]">
           No worries, we&apos;ll send you reset instructions.
         </p>
       </div>
 
       <form className="space-y-4" onSubmit={handleResetRequest}>
         {error && (
-          <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg border border-red-100">
+          <div className="p-3 text-sm text-[#ba1a1a] bg-[#ffdad6] rounded-lg border border-[#f9b4ae]">
             {error}
           </div>
         )}
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Email Address</label>
-          <div className="mt-1 relative">
-            <Mail className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
-            <input 
-              type="email" 
-              required 
+          <label className={labelCls}>Email Address</label>
+          <div className="relative">
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#757680]" />
+            <input
+              type="email"
+              required
               value={email}
-              onChange={(e) => setEmail(e.target.value)} 
-              className="pl-10 w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#002395] outline-none" 
-              placeholder="you@example.com" 
+              onChange={(e) => setEmail(e.target.value)}
+              className={inputCls}
+              placeholder="you@example.com"
             />
           </div>
         </div>
@@ -110,18 +107,16 @@ export default function ForgotPasswordPage() {
         <button
           type="submit"
           disabled={isLoading}
-          style={{ backgroundColor: primaryColor }}
-          className="w-full text-white p-3 rounded-lg font-bold hover:opacity-90 transition shadow-md flex items-center justify-center gap-2 min-h-[50px]"
+          className="w-full h-12 bg-[#1b2e5e] hover:bg-[#011848] text-white rounded-lg font-semibold text-sm transition-colors shadow-[0px_2px_4px_rgba(27,46,94,0.15)] flex items-center justify-center gap-2 disabled:opacity-50"
         >
           {isLoading ? <Loader /> : "Reset Password"}
         </button>
       </form>
 
       <div className="text-center">
-        <Link 
-          href="/login" 
-          className="inline-flex items-center gap-2 text-sm font-bold hover:underline" 
-          style={{ color: primaryColor }}
+        <Link
+          href="/login"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-[#1b2e5e] hover:text-[#011848] transition-colors"
         >
           <ArrowLeft className="h-4 w-4" /> Back to Login
         </Link>

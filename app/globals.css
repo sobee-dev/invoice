@@ -1,29 +1,151 @@
 @import "tailwindcss";
-@custom-variant dark (&:is(.dark *));
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --primary: #002395;
+@theme {
+  /* ── Typography ───────────────────────────────────────────────────── */
+  --font-sans: var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif;
+
+  /* ── BillBuzz Design System – Primary ────────────────────────────── */
+  --color-primary: #011848;
+  --color-primary-container: #1b2e5e;
+  --color-on-primary: #ffffff;
+  --color-on-primary-container: #8597cd;
+  --color-inverse-primary: #b3c5fe;
+
+  /* ── Secondary (Amber) ───────────────────────────────────────────── */
+  --color-secondary: #795900;
+  --color-secondary-container: #fece65;
+  --color-on-secondary: #ffffff;
+  --color-on-secondary-container: #755700;
+
+  /* ── Tertiary ─────────────────────────────────────────────────────── */
+  --color-tertiary: #2f1500;
+  --color-tertiary-container: #4d2700;
+  --color-on-tertiary: #ffffff;
+  --color-on-tertiary-container: #c68c5c;
+
+  /* ── Surface / Background ────────────────────────────────────────── */
+  --color-surface: #fbf8fd;
+  --color-surface-dim: #dbd9de;
+  --color-surface-bright: #fbf8fd;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f5f3f8;
+  --color-surface-container: #efedf2;
+  --color-surface-container-high: #e9e7ec;
+  --color-surface-container-highest: #e4e2e6;
+  --color-on-surface: #1b1b1f;
+  --color-on-surface-variant: #45464f;
+  --color-inverse-surface: #303034;
+  --color-inverse-on-surface: #f2f0f5;
+  --color-surface-tint: #4b5d8f;
+  --color-surface-variant: #e4e2e6;
+
+  /* ── Background ──────────────────────────────────────────────────── */
+  --color-background: #fbf8fd;
+  --color-on-background: #1b1b1f;
+
+  /* ── Outline ─────────────────────────────────────────────────────── */
+  --color-outline: #757680;
+  --color-outline-variant: #c5c6d0;
+
+  /* ── Error ───────────────────────────────────────────────────────── */
+  --color-error: #ba1a1a;
+  --color-on-error: #ffffff;
+  --color-error-container: #ffdad6;
+  --color-on-error-container: #93000a;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-primary: var(--primary);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-/* @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-} */
-
+/* ── Base Styles ────────────────────────────────────────────────────── */
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: #fbf8fd;
+  color: #1b1b1f;
+  font-family: var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Design System Utility Classes ──────────────────────────────────── */
+
+/* Primary button */
+.btn-primary {
+  background-color: #1b2e5e;
+  color: #ffffff;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: background-color 150ms;
+}
+.btn-primary:hover {
+  background-color: #011848;
+}
+
+/* Secondary (Amber) button */
+.btn-secondary {
+  background-color: #fece65;
+  color: #755700;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: background-color 150ms;
+}
+.btn-secondary:hover {
+  background-color: #eec058;
+}
+
+/* Ghost button */
+.btn-ghost {
+  background-color: transparent;
+  border: 1px solid #1b2e5e;
+  color: #1b2e5e;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: background-color 150ms;
+}
+.btn-ghost:hover {
+  background-color: #f5f3f8;
+}
+
+/* Card */
+.card {
+  background-color: #ffffff;
+  border-radius: 0.75rem;
+  border: 1px solid #c5c6d0;
+  padding: 1rem;
+  box-shadow: 0px 2px 4px rgba(27, 46, 94, 0.05);
+}
+
+/* Input */
+.input-field {
+  height: 3rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid #dee2e6;
+  background-color: #ffffff;
+  color: #1b1b1f;
+  transition: border-color 150ms;
+  outline: none;
+  width: 100%;
+}
+.input-field:focus {
+  border-color: #1b2e5e;
+}
+
+/* Status chips */
+.chip-paid {
+  background-color: #dcfce7;
+  color: #15803d;
+  border-radius: 9999px;
+  padding: 0.125rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.chip-unpaid {
+  background-color: #fef9c3;
+  color: #a16207;
+  border-radius: 9999px;
+  padding: 0.125rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
