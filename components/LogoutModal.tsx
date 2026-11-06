@@ -1,7 +1,11 @@
 // components/LogoutModal.tsx
-import { useDashboardData } from "@/context/DashboardContext";
-import { db } from "@/lib/db";
+"use client";
+
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { ROUTES } from "@/lib/routes";
 
 export default function LogoutModal({
   isOpen,
@@ -10,46 +14,70 @@ export default function LogoutModal({
   isOpen: boolean;
   onClose: () => void;
 }) {
-  const { clearData } = useDashboardData();
+  const { logout } = useAuth();
   const router = useRouter();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   if (!isOpen) return null;
 
-  const handleFullLogout = async () => {
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+
     try {
-      clearData();
-      try {
-        sessionStorage.clear();
-        await db.delete();
-      } catch (dbErr) {
-        console.warn("DB delete failed", dbErr);
-      }
-      window.location.replace("/");
+      // Blacklists the refresh token, clears the cookie and local session,
+      // then sets the user to null.
+      await logout();
     } catch (err) {
-      console.error("Logout process encountered an error:", err);
-      window.location.href = "/";
+      // Local state is cleared even when the request fails, so the person
+      // is still signed out on this device.
+      console.warn("Logout request failed", err);
     }
+
+    try {
+      sessionStorage.clear();
+    } catch {
+      // Storage can be blocked in private modes. Nothing to do.
+    }
+
+    onClose();
+    router.replace(ROUTES.login);
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[9999]">
-      <div className="bg-white p-6 rounded-xl shadow-[0px_8px_16px_rgba(27,46,94,0.12)] border border-[#c5c6d0] max-w-sm w-full mx-4">
-        <h2 className="text-lg font-bold text-[#1b1b1f] mb-1">Confirm Logout</h2>
-        <p className="text-sm text-[#45464f] mb-6">
-          Are you sure you want to log out? Unsynced data may be lost.
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="logout-title"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm"
+      onClick={isLoggingOut ? undefined : onClose}
+    >
+      <div
+        className="mx-4 w-full max-w-sm rounded-xl border border-[#c5c6d0] bg-white p-6 shadow-[0px_8px_16px_rgba(27,46,94,0.12)]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 id="logout-title" className="mb-1 text-lg font-bold text-[#1b1b1f]">
+          Confirm Logout
+        </h2>
+        <p className="mb-6 text-sm text-[#45464f]">
+          Are you sure you want to log out of BillBuzz?
         </p>
         <div className="flex gap-3">
           <button
+            type="button"
             onClick={onClose}
-            className="flex-1 px-4 py-2.5 border border-[#c5c6d0] text-[#1b1b1f] rounded-lg text-sm font-semibold hover:bg-[#f5f3f8] transition-colors"
+            disabled={isLoggingOut}
+            className="flex-1 rounded-lg border border-[#c5c6d0] px-4 py-2.5 text-sm font-semibold text-[#1b1b1f] transition-colors hover:bg-[#f5f3f8] disabled:opacity-50"
           >
             Stay
           </button>
           <button
-            onClick={handleFullLogout}
-            className="flex-1 px-4 py-2.5 bg-[#ba1a1a] text-white rounded-lg text-sm font-semibold hover:bg-[#93000a] transition-colors"
+            type="button"
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-[#ba1a1a] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#93000a] disabled:opacity-60"
           >
-            Logout
+            {isLoggingOut ? <Loader2 className="h-4 w-4 animate-spin" /> : "Logout"}
           </button>
         </div>
       </div>

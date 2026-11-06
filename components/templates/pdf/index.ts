@@ -1,15 +1,13 @@
-// components/receipt-templates/pdf/index.ts
+// components/templates/pdf/index.ts
 //
-// PDF-export twin of components/receipt-templates/index.ts. Same
-// selection logic (purchase orders always get their own layout,
-// irrespective of the business's chosen customer-facing template) but
-// resolving to an HTML-builder function instead of a React component.
+// HTML builders for the invoice preview, print and PDF export. Purchase
+// orders always get their own supplier-facing layout, irrespective of the
+// business's chosen customer-facing template.
 
 import { DEFAULT_TEMPLATE_ID, effectiveTemplateId } from '@/lib/plan';
-import { SubscriptionInfo } from '../../../services/billing';
-import { BusinessProfile } from '../../../services/business';
-import { Document, DocumentType } from '../../../services/documents';
-import { TemplateId } from '../index';
+import { SubscriptionInfo } from '@/services/billing';
+import { BusinessProfile } from '@/services/business';
+import { Document, DocumentType } from '@/services/documents';
 import { buildClassicHtml } from './classicHtml';
 import { buildMinimalHtml } from './minimalHtml';
 import { buildModernHtml } from './modernHtml';
@@ -17,12 +15,14 @@ import { injectPlanFooter } from './planFooter';
 import { buildProfessionalHtml } from './professionalHtml';
 import { buildPurchaseOrderHtml } from './purchaseOrderHtml';
 
+// Taken from the backend type, so the ids can never drift from it.
+export type TemplateId = BusinessProfile['selectedTemplateId'];
 
 type HtmlBuilder = (doc: Document, business: BusinessProfile) => string;
 
 const HTML_TEMPLATES: Record<TemplateId, HtmlBuilder> = {
   classic: buildClassicHtml,
-  modern:  buildModernHtml,
+  modern: buildModernHtml,
   minimal: buildMinimalHtml,
   professional: buildProfessionalHtml,
 };

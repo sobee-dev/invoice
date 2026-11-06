@@ -16,6 +16,8 @@ export interface RowMenuItem {
 
 interface RowMenuProps {
   items: RowMenuItem[];
+  /** Screen reader name for the trigger button, for example "Actions for Jane Doe". */
+  label?: string;
   /** Accepted so existing callers still compile. The menu now flips on its own. */
   openUp?: boolean;
 }
@@ -23,7 +25,7 @@ interface RowMenuProps {
 const GAP = 4;
 const MARGIN = 8;
 
-export function RowMenu({ items }: RowMenuProps) {
+export function RowMenu({ items, label = "Row actions" }: RowMenuProps) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -112,7 +114,7 @@ export function RowMenu({ items }: RowMenuProps) {
       <button
         ref={triggerRef}
         type="button"
-        aria-label="Row actions"
+        aria-label={label}
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => (open ? close() : setOpen(true))}

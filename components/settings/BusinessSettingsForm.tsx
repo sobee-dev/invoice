@@ -11,8 +11,8 @@ import { BusinessProfile, businessService } from "@/services/business";
 import { resolveCurrency } from "@/utils/currencySymbol";
 import { SignatureField, SignatureType } from "./SignatureField";
 import { Banner, errMsg, Field, inputCls, Section, Toggle } from "./ui";
-import { TemplateId } from "../templates";
-import { InvoicePreview } from "../onboarding/InvoicePreview";
+
+import { InvoicePreview, TemplateId } from "../onboarding/InvoicePreview";
 import { deleteRemovedBrandAssets, useBrandAssets, validateSignature } from "@/hooks/useBrandAssets";
 import { useSubscriptionContext } from "@/context/SubscriptionContext";
 import { DEFAULT_TEMPLATE_ID, effectiveTemplateId, isTemplateLocked } from "@/lib/plan";

@@ -27,7 +27,7 @@ export function PlanCard({ storagePercent }: { storagePercent?: number }) {
     <div className="absolute inset-x-4 bottom-6 rounded-xl border border-outline-variant/60 bg-surface p-4">
       <div className="flex h-5 items-center justify-between">
         <span className="text-[10px] font-semibold uppercase tracking-wide text-on-surface-variant">
-          Plan: {subscription.planTier}
+          Plan: {subscription.planName}
         </span>
         <Icon name="auto_awesome" size={16} filled className="text-secondary" />
       </div>

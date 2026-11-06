@@ -10,8 +10,8 @@ async function fetchAllCustomers(): Promise<Customer[]> {
   let hasNext = true;
 
   while (hasNext) {
-    // The ordering name is a best guess. An unknown ordering is ignored by DRF.
-    const res: any = await customerService.list({ page, ordering: "-created_at" });
+    // "recent" is newest first, the same order the old -created_at gave.
+    const res: any = await customerService.list({ page, sort: "recent" });
     const results: Customer[] = Array.isArray(res) ? res : res?.results ?? [];
     all = all.concat(results);
     hasNext = !Array.isArray(res) && Boolean(res?.next);

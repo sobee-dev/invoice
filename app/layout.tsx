@@ -7,10 +7,12 @@ import { PWAProvider } from "@/context/PWAContext";
 import Providers from "@/components/Providers";
 
 // Body, forms, tables, invoice line items, badges.
-const inter = Inter({
+const inter = localFont({
+  src: "../public/fonts/Inter-Variable.woff2",
+  weight: "100 900",
   variable: "--font-inter",
-  subsets: ["latin"],
   display: "swap",
+  fallback: ["system-ui", "Arial", "sans-serif"],
 });
 
 // Headings, the app brand and major buttons. Self-hosted variable font,
@@ -22,6 +24,7 @@ const jakarta = localFont({
   display: "swap",
   fallback: ["system-ui", "Arial", "sans-serif"],
 });
+
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://billbuzz.ng'),
