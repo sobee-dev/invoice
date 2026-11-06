@@ -1,4 +1,4 @@
-import type { Business, Receipt, ReceiptItem } from '@/lib/types';
+{% comment %} import type { Business, Receipt, ReceiptItem } from '@/lib/types';
 import TemplateClassic from './TemplateClassic';
 import TemplateModern from './TemplateModern';
 import TemplateCompact from './TemplateCompact';
@@ -12,11 +12,13 @@ export interface TemplateProps {
 
 }
 
+export type TemplateId = "modern" | "classic" | "minimal" | "professional";
+
 // Registry mapping templateId → component
 const templateRegistry: Record<string, ComponentType<TemplateProps>> = {
   'template-classic': TemplateClassic,
   'template-modern': TemplateModern,
-  'template-compact': TemplateCompact,
+  'template-minimal': TemplateMinimal,
 };
 
 // Default fallback
@@ -50,4 +52,4 @@ export function templateExists(templateId: string): boolean {
 }
 
 // Re-export individual templates for direct use
-export { TemplateClassic, TemplateModern, TemplateCompact };
+export { TemplateClassic, TemplateModern, TemplateCompact }; {% endcomment %}

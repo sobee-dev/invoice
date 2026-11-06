@@ -2,29 +2,38 @@
 "use client";
 
 import { FcGoogle } from "react-icons/fc";
+import { GoogleOAuthPurpose, startGoogleOAuth } from "@/lib/googleOAuth";
 
-export default function GoogleAuthButton({ label = "Continue with Google" }: { label?: string }) {
+interface GoogleAuthButtonProps {
+  label?: string;
+  purpose?: GoogleOAuthPurpose;
+  reason?: string;
+  returnTo?: string;
+  disabled?: boolean;
+  tone?: "default" | "danger";
+}
 
-  const handleGoogleLogin = () => {
-    const params = new URLSearchParams({
-      client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
-      redirect_uri: `${process.env.NEXT_PUBLIC_APP_URL}/oauth/callback`,
-      response_type: "code",
-      scope: "openid email profile",
-      access_type: "online",
-      prompt: "select_account",
-    });
-
-    window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
-  };
+export default function GoogleAuthButton({
+  label = "Continue with Google",
+  purpose = "login",
+  reason,
+  returnTo,
+  disabled = false,
+  tone = "default",
+}: GoogleAuthButtonProps) {
+  const toneClasses =
+    tone === "danger"
+      ? "border-[#ba1a1a] text-[#ba1a1a] hover:bg-[#ffdad6]"
+      : "border-[#c5c6d0] text-[#1b1b1f] hover:bg-[#f5f3f8]";
 
   return (
     <button
-        type="button"
-        onClick={handleGoogleLogin}
-        className="w-full flex items-center justify-center gap-2 p-3 border border-[#c5c6d0] rounded-lg hover:bg-[#f5f3f8] transition font-medium text-[#1b1b1f]"
-      >
-        <FcGoogle className="h-5 w-5" /> Google
-      </button>
+      type="button"
+      disabled={disabled}
+      onClick={() => startGoogleOAuth({ purpose, reason, returnTo })}
+      className={`w-full flex items-center justify-center gap-2 p-3 border rounded-lg transition font-medium disabled:opacity-50 disabled:cursor-not-allowed ${toneClasses}`}
+    >
+      <FcGoogle className="h-5 w-5" /> {label === "Continue with Google" ? "Google" : label}
+    </button>
   );
 }

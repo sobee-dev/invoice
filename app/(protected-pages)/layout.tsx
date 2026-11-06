@@ -1,17 +1,15 @@
-// app/(dashboard)/layout.tsx
-import AuthGuard from "@/components/AuthGuard";
-import Loader from "@/components/Loader";
-import { Suspense } from "react";
+import InstallBanner from "@/components/InstallBanner";
+import Providers from "@/components/Providers";
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  
-  return <AuthGuard>
-    <Suspense fallback={
-        <div className="min-h-screen flex items-center justify-center">
-           <Loader />
-        </div>
-      }>
-        {children}
-      </Suspense>
-    </AuthGuard>;
-} 
+export default function ProtectedPagesLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <>
+      <InstallBanner />
+      <Providers>{children}</Providers>
+    </>
+  );
+}
