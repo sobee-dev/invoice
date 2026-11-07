@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { inputCls } from "./ui";
 import { SignaturePad } from "../SignaturePad";
 
+
 export type SignatureType = "none" | "text" | "image";
 
 interface Props {
