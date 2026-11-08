@@ -1,7 +1,7 @@
 // app/(owner)/reports/customers/page.tsx
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+
 import Link from "next/link";
 import { Icon } from "@/components/layout/Icon";
 import { StatCard } from "@/components/dashboard/StatCard";
@@ -11,9 +11,10 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { btnNavy } from "@/components/ui/buttonStyles";
 import { useBusiness } from "@/context/BusinessContext";
 import { ROUTES } from "@/lib/routes";
-import { customerService, type CustomerAnalytics } from "@/services/customers";
+
 import { resolveCurrency } from "@/utils/currencySymbol";
 import { fmtMoney } from "@/utils/money";
+import { useCustomerAnalytics } from "@/hooks/useReports";
 
 const PAYMENT_LABELS: Record<string, string> = {
   cash: "Cash",
@@ -89,22 +90,7 @@ export default function CustomerAnalyticsPage() {
   const { business } = useBusiness();
   const symbol = business?.currency ? resolveCurrency(business.currency).symbol : "";
 
-  const [data, setData] = useState<CustomerAnalytics | null>(null);
-  const [state, setState] = useState<"loading" | "ready" | "error">("loading");
-
-  const load = useCallback(async () => {
-    setState("loading");
-    try {
-      setData(await customerService.fetchCustomerAnalytics());
-      setState("ready");
-    } catch {
-      setState("error");
-    }
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
+  const { data, state, reload: load } = useCustomerAnalytics();
 
   const back = (
     <Link

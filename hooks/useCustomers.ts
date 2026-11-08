@@ -1,7 +1,7 @@
 // hooks/useCustomers.ts
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Customer, customerService } from "@/services/customers";
 
 async function fetchAllCustomers(): Promise<Customer[]> {
@@ -21,26 +21,14 @@ async function fetchAllCustomers(): Promise<Customer[]> {
 }
 
 export function useCustomers() {
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const query = useQuery({ queryKey: ["customers", "all"], queryFn: fetchAllCustomers });
 
-  const load = useCallback(async () => {
-    setIsLoading(true);
-    setError(false);
-    try {
-      setCustomers(await fetchAllCustomers());
-    } catch {
-      setCustomers([]);
-      setError(true);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  return { customers, isLoading, error, reload: load };
+  return {
+    customers: query.data ?? [],
+    isLoading: query.isPending,
+    error: query.isError,
+    reload: () => {
+      query.refetch();
+    },
+  };
 }

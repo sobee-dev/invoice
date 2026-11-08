@@ -1,7 +1,7 @@
 // app/(owner)/clients/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { Icon } from "@/components/layout/Icon";
 import { Avatar } from "@/components/ui/Avatar";
@@ -12,8 +12,9 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { btnAmber, btnNavy } from "@/components/ui/buttonStyles";
 import { useBusiness } from "@/context/BusinessContext";
 import { useClientList } from "@/hooks/useClientList";
+import { useCustomerCounts } from "@/hooks/useCustomerCounts";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
-import { Customer, CustomerCounts, CustomerSort, customerService } from "@/services/customers";
+import { Customer, CustomerSort } from "@/services/customers";
 import { resolveCurrency } from "@/utils/currencySymbol";
 import { fmtMoney } from "@/utils/money";
 
@@ -52,7 +53,9 @@ export default function ClientsPage() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<Status>("all");
   const [sort, setSort] = useState<CustomerSort>("recent");
-  const [counts, setCounts] = useState<CustomerCounts | null>(null);
+
+  // The header cards come from their own small cached query, not from the loaded rows.
+  const { counts } = useCustomerCounts();
 
   // Search runs on the server, so it covers every client and not only the loaded ones.
   const debouncedSearch = useDebouncedValue(search.trim());
@@ -62,11 +65,6 @@ export default function ClientsPage() {
     status,
     sort,
   });
-
-  // The header cards come from their own small endpoint, not from the loaded rows.
-  useEffect(() => {
-    customerService.counts().then(setCounts).catch(() => {});
-  }, []);
 
   const symbol = business?.currency ? resolveCurrency(business.currency).symbol : "";
   const hasFilters = debouncedSearch.length > 0 || status !== "all";

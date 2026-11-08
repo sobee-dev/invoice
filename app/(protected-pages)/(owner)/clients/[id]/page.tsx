@@ -1,9 +1,10 @@
 // app/(owner)/clients/[id]/page.tsx
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { ClientActivityFeed } from "@/components/clients/ClientActivityFeed";
 import { ClientProfileCard } from "@/components/clients/ClientProfileCard";
 import { ClientRecentDocuments } from "@/components/clients/ClientRecentDocuments";
@@ -19,42 +20,29 @@ import { Toast, ToastState } from "@/components/ui/Toast";
 import { btnNavy, btnOutline } from "@/components/ui/buttonStyles";
 import { useBusiness } from "@/context/BusinessContext";
 import { useCustomerDocuments } from "@/hooks/useCustomerDocuments";
+import { useDetailQuery } from "@/hooks/useDetailQuery";
 import { buildActivity } from "@/lib/customerStats";
 import { Customer, customerService } from "@/services/customers";
 import { resolveCurrency } from "@/utils/currencySymbol";
 import { getApiErrorMessage } from "@/utils/getErrorMessage";
 import { fmtMoney } from "@/utils/money";
 
-type LoadState = "loading" | "ready" | "missing" | "error";
-
 export default function ClientDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { business } = useBusiness();
+  const queryClient = useQueryClient();
   const currency = resolveCurrency(business?.currency ?? "");
   const symbol = business?.currency ? currency.symbol : "";
 
-  const [client, setClient] = useState<Customer | null>(null);
-  const [state, setState] = useState<LoadState>("loading");
+  const clientKey = ["customers", "detail", id] as const;
+  const { data: client, state } = useDetailQuery<Customer>(clientKey, () => customerService.get(id));
+
   const [confirmDeactivate, setConfirmDeactivate] = useState(false);
   const [statusBusy, setStatusBusy] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
   const dismissToast = useCallback(() => setToast(null), []);
 
   const { docs, isLoading: docsLoading, error: docsError, partial, reload: reloadDocs } = useCustomerDocuments(id);
-
-  const loadClient = useCallback(async () => {
-    try {
-      setClient(await customerService.get(id));
-      setState("ready");
-    } catch (err: any) {
-      setState(err?.response?.status === 404 ? "missing" : "error");
-    }
-  }, [id]);
-
-  useEffect(() => {
-    setState("loading");
-    loadClient();
-  }, [loadClient]);
 
   // Deleted documents stay out of every figure and list on this page.
   const live = useMemo(() => docs.filter((d) => d.status !== "deleted"), [docs]);
@@ -83,7 +71,7 @@ export default function ClientDetailPage() {
     setStatusBusy(true);
     try {
       const updated = next === "inactive" ? await customerService.deactivate(client.id) : await customerService.reactivate(client.id);
-      setClient((prev) => (prev ? { ...prev, ...updated } : updated));
+      queryClient.setQueryData<Customer>(clientKey, (prev) => (prev ? { ...prev, ...updated } : updated));
       setToast({ tone: "success", text: next === "inactive" ? "Client deactivated." : "Client reactivated." });
     } catch (err: any) {
       setToast({ tone: "error", text: getApiErrorMessage(err, "Could not update this client. Please try again.") });

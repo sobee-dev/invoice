@@ -32,7 +32,7 @@ export function RecentDocuments({ docs, fallbackCurrency, isLoading = false, fai
       divided
       bodyClassName="p-0"
       action={
-        <Link href={ROUTES.docs} className="text-sm font-semibold text-primary hover:underline">
+        <Link href={ROUTES.docs} className="text-sm font-semibold text-primary hover:underline max-sm:text-xs">
           View All
         </Link>
       }
@@ -46,7 +46,7 @@ export function RecentDocuments({ docs, fallbackCurrency, isLoading = false, fai
               <button
                 type="button"
                 onClick={onRetry}
-                className="h-10 rounded-lg bg-primary-container px-5 text-sm font-semibold text-white hover:bg-primary"
+                className="h-10 rounded-lg bg-primary-container px-5 text-sm font-semibold text-white hover:bg-primary max-sm:h-8 max-sm:px-4 max-sm:text-xs"
               >
                 Try again
               </button>
@@ -68,7 +68,7 @@ export function RecentDocuments({ docs, fallbackCurrency, isLoading = false, fai
               action={
                 <Link
                   href={ROUTES.newSalesInvoice}
-                  className="inline-flex h-10 items-center gap-2 rounded-lg bg-secondary px-4 text-sm font-semibold text-white"
+                  className="inline-flex h-10 items-center gap-2 rounded-lg bg-secondary px-4 text-sm font-semibold text-white max-sm:h-8 max-sm:px-3 max-sm:text-xs"
                 >
                   <Icon name="add" size={18} /> Create Invoice
                 </Link>

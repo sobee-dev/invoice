@@ -1,9 +1,10 @@
 // app/(owner)/docs/[id]/page.tsx
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { AddToInventoryModal } from "@/components/docs/AddToInventoryModal";
 import { DocumentSummary } from "@/components/docs/DocumentSummary";
 import { InvoicePreview } from "@/components/docs/InvoicePreview";
@@ -20,7 +21,9 @@ import { Toast, ToastState } from "@/components/ui/Toast";
 import { btnAmber, btnNavy, btnOutline } from "@/components/ui/buttonStyles";
 import { useAuth } from "@/context/AuthContext";
 import { useBusiness } from "@/context/BusinessContext";
+import { useSubscriptionContext } from "@/context/SubscriptionContext";
 import { useDeductStock } from "@/hooks/useDeductStock";
+import { useDetailQuery } from "@/hooks/useDetailQuery";
 import { canDeductStock, DocumentType, fromDocument, TYPE_LABEL } from "@/lib/documents";
 import { printHtml } from "@/lib/printHtml";
 import { invoicePaymentsRoute, ROUTES } from "@/lib/routes";
@@ -29,9 +32,7 @@ import { resolveCurrency } from "@/utils/currencySymbol";
 import { getDisplayName } from "@/utils/displayName";
 import { fmtLongDate } from "@/utils/formatDate";
 import { getApiErrorMessage } from "@/utils/getErrorMessage";
-import { useSubscriptionContext } from "@/context/SubscriptionContext";
 
-type LoadState = "loading" | "ready" | "missing" | "error";
 type Payment = "paid" | "pending" | "unpaid";
 type Confirm = "paid" | "delivered" | "unpaid" | null;
 
@@ -58,10 +59,12 @@ export default function DocumentDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const { business } = useBusiness();
+  const queryClient = useQueryClient();
   const { start: startDeduct, loadingId, overlay: deductOverlay } = useDeductStock();
 
-  const [doc, setDoc] = useState<Document | null>(null);
-  const [state, setState] = useState<LoadState>("loading");
+  const docKey = ["documents", "detail", id] as const;
+  const { data: doc, state } = useDetailQuery<Document>(docKey, () => documentService.get(id));
+
   const [confirm, setConfirm] = useState<Confirm>(null);
   const [inventoryOpen, setInventoryOpen] = useState(false);
   const [printing, setPrinting] = useState(false);
@@ -69,32 +72,10 @@ export default function DocumentDetailPage() {
   const dismissToast = useCallback(() => setToast(null), []);
   const { subscription, isLoading: planLoading } = useSubscriptionContext();
 
-  const load = useCallback(async () => {
-    try {
-      setDoc(await documentService.get(id));
-      setState("ready");
-    } catch (err: any) {
-      setState(err?.response?.status === 404 ? "missing" : "error");
-    }
-  }, [id]);
-
-  useEffect(() => {
-    setState("loading");
-    load();
-  }, [load]);
-
-  
-  
-
-  // The deduct dialog is owned by useDeductStock. Re-read the document when the
-  // user comes back to this tab so the stock badge never shows an old value.
-  useEffect(() => {
-    const onVisible = () => {
-      if (document.visibilityState === "visible") load();
-    };
-    document.addEventListener("visibilitychange", onVisible);
-    return () => document.removeEventListener("visibilitychange", onVisible);
-  }, [load]);
+  // Writes refresh the cache by themselves. This only shows the server's reply
+  // straight away, so the page never flashes the old status.
+  const patchDoc = (changes: Document) =>
+    queryClient.setQueryData<Document>(docKey, (prev) => (prev ? { ...prev, ...changes } : changes));
 
   const html = useMemo(() => {
     if (!doc || !business || planLoading) return "";
@@ -129,17 +110,14 @@ export default function DocumentDetailPage() {
   const payment: Payment = doc.status === "paid" ? "paid" : Number(doc.amountPaid) > 0 ? "pending" : "unpaid";
   const symbol = resolveCurrency(doc.currency || business?.currency || "").symbol;
 
-  const needsDeduction = doc.stockStatus === "pending" || doc.stockStatus === "partial";
   const canMarkPaid = !isPurchase && doc.status !== "paid" && doc.status !== "deleted";
   const canMarkUnpaid = isSales && doc.status === "draft";
   const canMarkDelivered = isPurchase && doc.status !== "delivered" && doc.status !== "deleted";
   const canViewPayments = isOwner && isSales && (doc.status === "unpaid" || doc.status === "paid");
-  
-  
-  const willDeduct = doc.stockStatus === "pending" && !doc.stockDeductedAt;
 
+  const willDeduct = doc.stockStatus === "pending" && !doc.stockDeductedAt;
   const canDeduct = canDeductStock(fromDocument(doc));
-    
+
   const editBlocked = editBlockedReason(doc);
   const editHref = `${isSales ? ROUTES.newSalesInvoice : ROUTES.newDocument}?id=${doc.id}`;
 
@@ -158,7 +136,7 @@ export default function DocumentDetailPage() {
   const markPaid = async () => {
     try {
       const updated = await documentService.markPaid(doc.id);
-      setDoc((prev) => (prev ? { ...prev, ...updated } : updated));
+      patchDoc(updated);
       setToast({ tone: "success", text: "Marked as paid." });
     } catch (err: any) {
       setToast({ tone: "error", text: getApiErrorMessage(err, "Could not mark this document as paid.") });
@@ -170,7 +148,7 @@ export default function DocumentDetailPage() {
   const markUnpaid = async () => {
     try {
       const updated = await documentService.markUnpaid(doc.id, { deductStock: willDeduct });
-      setDoc((prev) => (prev ? { ...prev, ...updated } : updated));
+      patchDoc(updated);
       setToast({
         tone: "success",
         text:
@@ -187,24 +165,22 @@ export default function DocumentDetailPage() {
     }
   };
 
-    const markDelivered = async () => {
-      try {
-        const updated = await documentService.markDelivered(doc.id);
-        const next = { ...doc, ...updated };
-        setDoc(next);
-        if ((next.items ?? []).some((i) => i.product)) {
-          setInventoryOpen(true);
-        } else {
-          setToast({ tone: "success", text: "Marked as delivered. There are no product-linked items to add to stock." });
-        }
-      } catch (err: any) {
-        setToast({ tone: "error", text: getApiErrorMessage(err, "Could not mark this order as delivered.") });
-      } finally {
-        setConfirm(null);
+  const markDelivered = async () => {
+    try {
+      const updated = await documentService.markDelivered(doc.id);
+      const next = { ...doc, ...updated };
+      patchDoc(updated);
+      if ((next.items ?? []).some((i) => i.product)) {
+        setInventoryOpen(true);
+      } else {
+        setToast({ tone: "success", text: "Marked as delivered. There are no product-linked items to add to stock." });
       }
-    };
-
-
+    } catch (err: any) {
+      setToast({ tone: "error", text: getApiErrorMessage(err, "Could not mark this order as delivered.") });
+    } finally {
+      setConfirm(null);
+    }
+  };
 
   const badges = (
     <div className="flex flex-wrap items-center gap-2">
@@ -362,278 +338,3 @@ export default function DocumentDetailPage() {
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// // app/(owner)/docs/[id]/page.tsx
-// "use client";
-
-// import { useCallback, useEffect, useMemo, useState } from "react";
-// import Link from "next/link";
-// import { useParams } from "next/navigation";
-// import { AddToInventoryModal } from "@/components/docs/AddToInventoryModal";
-// import { DocumentSummary } from "@/components/docs/DocumentSummary";
-// import { InvoicePreview } from "@/components/docs/InvoicePreview";
-// import { getInvoiceHtml } from "@/components/templates/pdf";
-// import { Icon } from "@/components/layout/Icon";
-// import { Badge, BadgeTone } from "@/components/ui/Badge";
-// import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
-// import { EmptyState } from "@/components/ui/EmptyState";
-// import { PageHeader } from "@/components/ui/PageHeader";
-// import { SectionCard } from "@/components/ui/SectionCard";
-// import { StatusChip } from "@/components/ui/StatusChip";
-// import { Toast, ToastState } from "@/components/ui/Toast";
-// import { btnAmber, btnNavy, btnOutline } from "@/components/ui/buttonStyles";
-// import { useAuth } from "@/context/AuthContext";
-// import { useBusiness } from "@/context/BusinessContext";
-// import { useDeductStock } from "@/hooks/useDeductStock";
-// import { DocumentType, fromDocument, TYPE_LABEL } from "@/lib/documents";
-// import { printHtml } from "@/lib/printHtml";
-// import { ROUTES } from "@/lib/routes";
-// import { Document, documentService } from "@/services/documents";
-// import { resolveCurrency } from "@/utils/currencySymbol";
-// import { getDisplayName } from "@/utils/displayName";
-// import { fmtLongDate } from "@/utils/formatDate";
-// import { getApiErrorMessage } from "@/utils/getErrorMessage";
-// import { editBlockedReason } from "@/lib/documentForm";
-
-// type LoadState = "loading" | "ready" | "missing" | "error";
-// type Payment = "paid" | "pending" | "unpaid";
-
-// const PAYMENT_TONE: Record<Payment, BadgeTone> = { paid: "green", pending: "orange", unpaid: "red" };
-// const PAYMENT_LABEL: Record<Payment, string> = { paid: "Paid", pending: "Part paid", unpaid: "Unpaid" };
-
-// function issuedLabel(doc: Document): string {
-//   const raw = doc.documentDate || doc.createdAt;
-//   const d = /^\d{4}-\d{2}-\d{2}$/.test(raw) ? new Date(`${raw}T00:00:00`) : new Date(raw);
-//   return Number.isNaN(d.getTime()) ? raw : fmtLongDate(d);
-// }
-
-
-
-// export default function DocumentDetailPage() {
-//   const { id } = useParams<{ id: string }>();
-//   const { user } = useAuth();
-//   const { business } = useBusiness();
-//   const { start: startDeduct, loadingId, overlay: deductOverlay } = useDeductStock();
-
-//   const [doc, setDoc] = useState<Document | null>(null);
-//   const [state, setState] = useState<LoadState>("loading");
-//   const [confirm, setConfirm] = useState<"paid" | "delivered" | null>(null);
-//   const [inventoryOpen, setInventoryOpen] = useState(false);
-//   const [printing, setPrinting] = useState(false);
-//   const [toast, setToast] = useState<ToastState | null>(null);
-//   const dismissToast = useCallback(() => setToast(null), []);
-
-//   const load = useCallback(async () => {
-//     try {
-//       setDoc(await documentService.get(id));
-//       setState("ready");
-//     } catch (err: any) {
-//       setState(err?.response?.status === 404 ? "missing" : "error");
-//     }
-//   }, [id]);
-
-//   useEffect(() => {
-//     setState("loading");
-//     load();
-//   }, [load]);
-
-//   const html = useMemo(
-//     () => (doc && business ? getInvoiceHtml(business.selectedTemplateId, doc.documentType, doc, business) : ""),
-//     [doc, business],
-//   );
-
-//   if (state === "loading") {
-//     return <div className="h-96 animate-pulse rounded-xl border border-outline-variant bg-surface-container-low" />;
-//   }
-
-//   if (state !== "ready" || !doc) {
-//     return (
-//       <div className="rounded-xl border border-outline-variant bg-white shadow-card">
-//         <EmptyState
-//           icon={state === "missing" ? "find_in_page" : "cloud_off"}
-//           title={state === "missing" ? "Document not found" : "We could not load this document"}
-//           description={state === "missing" ? "It may have been removed." : "Please check your connection and try again."}
-//           action={
-//             <Link href={ROUTES.docs} className={btnNavy}>
-//               Back to documents
-//             </Link>
-//           }
-//         />
-//       </div>
-//     );
-//   }
-
-//   const type = doc.documentType as DocumentType;
-//   const isSales = type === "sales_invoice";
-//   const isPurchase = type === "purchase_invoice";
-//   const payment: Payment = doc.status === "paid" ? "paid" : Number(doc.amountPaid) > 0 ? "pending" : "unpaid";
-//   const symbol = resolveCurrency(doc.currency || business?.currency || "").symbol;
-
-//   const canMarkPaid = !isPurchase && doc.status !== "paid" && doc.status !== "deleted";
-//   const canMarkDelivered = isPurchase && doc.status !== "delivered" && doc.status !== "deleted";
-//   const editBlocked = editBlockedReason(doc);
-//   const editHref = `${isSales ? ROUTES.newSalesInvoice : ROUTES.newDocument}?id=${doc.id}`;
-
-//   const handlePrint = async () => {
-//     if (!html || printing) return;
-//     setPrinting(true);
-//     try {
-//       await printHtml(html, doc.documentNumber);
-//     } catch (err: any) {
-//       setToast({ tone: "error", text: err?.message || "Could not open the print dialog." });
-//     } finally {
-//       setPrinting(false);
-//     }
-//   };
-
-//   const markPaid = async () => {
-//     try {
-//       const updated = await documentService.markPaid(doc.id);
-//       setDoc((prev) => (prev ? { ...prev, ...updated } : updated));
-//       setToast({ tone: "success", text: "Marked as paid." });
-//     } catch (err: any) {
-//       setToast({ tone: "error", text: getApiErrorMessage(err, "Could not mark this document as paid.") });
-//     } finally {
-//       setConfirm(null);
-//     }
-//   };
-
-//   const markDelivered = async () => {
-//     try {
-//       const updated = await documentService.markDelivered(doc.id);
-//       const next = { ...doc, ...updated };
-//       setDoc(next);
-//       if ((next.items ?? []).some((i) => i.product)) {
-//         setInventoryOpen(true);
-//       } else {
-//         setToast({ tone: "success", text: "Marked as delivered. There are no product-linked items to add to stock." });
-//       }
-//     } catch (err: any) {
-//       setToast({ tone: "error", text: getApiErrorMessage(err, "Could not mark this order as delivered.") });
-//     } finally {
-//       setConfirm(null);
-//     }
-//   };
-
-//   const badges = (
-//     <div className="flex items-center gap-2">
-//       <StatusChip status={doc.status} />
-//       {!isPurchase && <Badge tone={PAYMENT_TONE[payment]}>{PAYMENT_LABEL[payment]}</Badge>}
-//     </div>
-//   );
-
-//   return (
-//     <div className="space-y-6">
-//       <PageHeader
-//         title={doc.documentNumber}
-//         subtitle={`${TYPE_LABEL[type]} · Issued ${issuedLabel(doc)}`}
-//         backHref={ROUTES.docs}
-//         backLabel="Documents"
-//         actions={badges}
-//       />
-
-//       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
-//         <div className="min-w-0 rounded-xl bg-surface-container-low p-4 sm:p-6">
-//           {html ? <InvoicePreview html={html} /> : <div className="h-96 animate-pulse rounded-lg bg-white" />}
-//         </div>
-
-//         <aside className="space-y-6 xl:sticky xl:top-[94px] xl:self-start">
-//           <SectionCard title="Actions">
-//             <div className="space-y-3">
-//               <button type="button" onClick={handlePrint} disabled={printing || !html} className={`${btnNavy} h-11 w-full`}>
-//                 <Icon name="print" size={18} /> {printing ? "Opening..." : "Print or save as PDF"}
-//               </button>
-
-//               {canMarkPaid && (
-//                 <button type="button" onClick={() => setConfirm("paid")} className={`${btnAmber} h-11 w-full`}>
-//                   <Icon name="payments" size={18} /> Mark as paid
-//                 </button>
-//               )}
-
-//               {canMarkDelivered && (
-//                 <button type="button" onClick={() => setConfirm("delivered")} className={`${btnAmber} h-11 w-full`}>
-//                   <Icon name="local_shipping" size={18} /> Mark as delivered
-//                 </button>
-//               )}
-
-//               {isSales && doc.status !== "deleted" && (
-//                 <button
-//                   type="button"
-//                   onClick={() => startDeduct(fromDocument(doc))}
-//                   disabled={loadingId === doc.id}
-//                   className={`${btnOutline} h-11 w-full`}
-//                 >
-//                   <Icon name="inventory_2" size={18} /> {loadingId === doc.id ? "Loading stock..." : "Deduct stock"}
-//                 </button>
-//               )}
-
-//               {editBlocked ? (
-//                 <div>
-//                   <button type="button" disabled className={`${btnOutline} h-11 w-full`}>
-//                     <Icon name="edit" size={18} /> Edit
-//                   </button>
-//                   <p className="mt-1.5 text-xs text-on-surface-variant">{editBlocked}</p>
-//                 </div>
-//               ) : (
-//                 <Link href={editHref} className={`${btnOutline} h-11 w-full`}>
-//                   <Icon name="edit" size={18} /> Edit
-//                 </Link>
-//               )}
-//             </div>
-//           </SectionCard>
-
-//           <DocumentSummary
-//             doc={doc}
-//             symbol={symbol}
-//             creatorName={doc.createdBy ? getDisplayName(doc.createdBy, user) : null}
-//           />
-//         </aside>
-//       </div>
-
-//       <ConfirmDialog
-//         open={confirm === "paid"}
-//         title="Mark this document as paid?"
-//         description="This can't be undone from here."
-//         confirmLabel="Mark as paid"
-//         onConfirm={markPaid}
-//         onClose={() => setConfirm(null)}
-//       />
-
-//       <ConfirmDialog
-//         open={confirm === "delivered"}
-//         title="Mark this order as delivered?"
-//         description="You can add the delivered items to your stock next."
-//         confirmLabel="Mark as delivered"
-//         onConfirm={markDelivered}
-//         onClose={() => setConfirm(null)}
-//       />
-
-//       <AddToInventoryModal
-//         open={inventoryOpen}
-//         documentId={doc.id}
-//         items={doc.items ?? []}
-//         onClose={() => setInventoryOpen(false)}
-//         onApplied={() => {
-//           setInventoryOpen(false);
-//           setToast({ tone: "success", text: "Items have been added to inventory." });
-//         }}
-//       />
-
-//       {deductOverlay}
-//       <Toast toast={toast} onDismiss={dismissToast} />
-//     </div>
-//   );
-// }

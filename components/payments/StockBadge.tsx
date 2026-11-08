@@ -16,9 +16,9 @@ export function StockBadge({ status, compact = false }: { status?: StockStatus |
   return (
     <span
       title={s.label}
-      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${s.cls}`}
+      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold max-sm:px-2 max-sm:text-[10px] ${s.cls}`}
     >
-      <Icon name={s.icon} size={14} />
+      <Icon name={s.icon} size={14} mobileSize={12} />
       {!compact && s.label}
     </span>
   );

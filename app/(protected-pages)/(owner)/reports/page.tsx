@@ -1,7 +1,7 @@
 // app/(owner)/reports/page.tsx
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+
 import Link from "next/link";
 import { Icon } from "@/components/layout/Icon";
 import { RevenueChart } from "@/components/dashboard/RevenueChart";
@@ -11,7 +11,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { btnNavy } from "@/components/ui/buttonStyles";
 import { useBusiness } from "@/context/BusinessContext";
 import { ROUTES } from "@/lib/routes";
-import { reportService, ReportsDashboard } from "@/services/reports";
+import { useReportsDashboard } from "@/hooks/useReports";
 import { resolveCurrency } from "@/utils/currencySymbol";
 import { toRevenuePoints } from "@/utils/dashboardAdapters";
 import { fmtMoney } from "@/utils/money";
@@ -26,22 +26,7 @@ export default function ReportsPage() {
   const { business } = useBusiness();
   const symbol = business?.currency ? resolveCurrency(business.currency).symbol : "";
 
-  const [report, setReport] = useState<ReportsDashboard | null>(null);
-  const [state, setState] = useState<"loading" | "ready" | "error">("loading");
-
-  const load = useCallback(async () => {
-    setState("loading");
-    try {
-      setReport(await reportService.getDashboard());
-      setState("ready");
-    } catch {
-      setState("error");
-    }
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
+  const { report, state, reload: load } = useReportsDashboard();
 
   const growth = report?.revenueGrowth ?? "—";
   const hasGrowth = growth !== "—";

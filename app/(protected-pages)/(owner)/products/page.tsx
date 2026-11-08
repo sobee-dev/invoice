@@ -1,7 +1,7 @@
 // app/(owner)/products/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { Icon } from "@/components/layout/Icon";
 import { ProductsTable } from "@/components/products/ProductsTable";
@@ -11,8 +11,9 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { btnAmber, btnNavy } from "@/components/ui/buttonStyles";
 import { useBusiness } from "@/context/BusinessContext";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { useProductCounts } from "@/hooks/useProductCounts";
 import { useProductList } from "@/hooks/useProductList";
-import { ProductCounts, ProductStockFilter, productService } from "@/services/products";
+import { ProductStockFilter } from "@/services/products";
 import { resolveCurrency } from "@/utils/currencySymbol";
 
 type Filter = "all" | ProductStockFilter;
@@ -30,7 +31,9 @@ export default function ProductsPage() {
   const { business } = useBusiness();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
-  const [counts, setCounts] = useState<ProductCounts | null>(null);
+
+  // The badge numbers come from their own small cached query, not from the loaded rows.
+  const { counts } = useProductCounts();
 
   // Search and the stock filter run on the server, so they cover every product
   // and not only the loaded ones.
@@ -40,11 +43,6 @@ export default function ProductsPage() {
     search: debouncedSearch,
     stock: filter === "all" ? undefined : filter,
   });
-
-  // The badge numbers come from their own small endpoint, not from the loaded rows.
-  useEffect(() => {
-    productService.counts().then(setCounts).catch(() => {});
-  }, []);
 
   const symbol = business?.currency ? resolveCurrency(business.currency).symbol : "";
   const hasFilters = debouncedSearch.length > 0 || filter !== "all";

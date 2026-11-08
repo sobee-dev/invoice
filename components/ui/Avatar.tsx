@@ -23,6 +23,8 @@ interface AvatarProps {
 }
 
 export function Avatar({ name, imageUrl, size = 40, className = "" }: AvatarProps) {
+  // Inline width/height win over classes, hence the `!`. Only small avatars shrink.
+  const compact = size <= 40 ? "max-sm:!h-8 max-sm:!w-8 max-sm:!text-[11px]" : "";
   if (imageUrl) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
@@ -31,7 +33,7 @@ export function Avatar({ name, imageUrl, size = 40, className = "" }: AvatarProp
         alt={name}
         width={size}
         height={size}
-        className={`shrink-0 rounded-full object-cover ${className}`}
+        className={`shrink-0 rounded-full object-cover ${compact} ${className}`}
         style={{ width: size, height: size }}
       />
     );
@@ -40,7 +42,7 @@ export function Avatar({ name, imageUrl, size = 40, className = "" }: AvatarProp
   return (
     <span
       aria-hidden="true"
-      className={`inline-flex shrink-0 items-center justify-center rounded-full font-bold ${toneFor(name)} ${className}`}
+      className={`inline-flex shrink-0 items-center justify-center rounded-full font-bold ${toneFor(name)} ${compact} ${className}`}
       style={{ width: size, height: size, fontSize: Math.round(size * 0.34) }}
     >
       {initials(name)}

@@ -8,14 +8,18 @@ import { fmtMoney } from "@/utils/money";
 const th = "px-6 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-on-surface-variant";
 const bar = "animate-pulse rounded bg-surface-container";
 
+const ownerHref = (p: ProductData) => `/products/${p.id}`;
+
 export function ProductsTable({
   products,
   symbol,
   isLoading = false,
+  hrefFor = ownerHref,
 }: {
   products: ProductData[];
   symbol: string;
   isLoading?: boolean;
+  hrefFor?: (product: ProductData) => string;
 }) {
   if (isLoading) {
     return (
@@ -51,7 +55,7 @@ export function ProductsTable({
             {products.map((p) => (
               <tr key={p.id} className="hover:bg-surface-container-low/60">
                 <td className="px-6 py-4">
-                  <Link href={`/products/${p.id}`} className="flex items-center gap-4">
+                  <Link href={hrefFor(p)} className="flex items-center gap-4">
                     <ProductThumb imageUrl={p.imageUrl} name={p.name} />
                     <span className="min-w-0">
                       <span className="block truncate font-bold text-primary hover:underline">{p.name}</span>
@@ -74,7 +78,7 @@ export function ProductsTable({
       <ul className="space-y-3 p-4 md:hidden">
         {products.map((p) => (
           <li key={p.id}>
-            <Link href={`/products/${p.id}`} className="flex gap-3 rounded-xl border border-outline-variant bg-white p-3 shadow-card">
+            <Link href={hrefFor(p)} className="flex gap-3 rounded-xl border border-outline-variant bg-white p-3 shadow-card">
               <ProductThumb imageUrl={p.imageUrl} name={p.name} size={64} />
               <span className="min-w-0 flex-1">
                 <span className="flex items-start justify-between gap-2">

@@ -1,7 +1,8 @@
-// hooks/usePaginatedList.ts  (same file on mobile and web)
+// hooks/usePaginatedList.ts
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useMemo } from "react";
+import { useInfiniteQuery } from "@tanstack/react-query";
 
 export interface PageResult<T> {
   count?: number;
@@ -14,117 +15,58 @@ interface Options {
 }
 
 /**
- * Loads one page at a time. fetchPage must be wrapped in useCallback so its
- * identity only changes when a filter changes: a new identity throws the list
- * away and starts again from page 1.
- *
- * Only the newest request may write state, so a slow response for an old
- * filter can never replace the current list.
+ * Loads one page at a time and caches every filter combination under its own
+ * key. Pass a key that contains every filter, so a new filter gets a new
+ * cache entry instead of overwriting the old one. Coming back to a list you
+ * already opened shows it at once and refreshes it quietly.
  */
 export function usePaginatedList<T extends { id: string }>(
+  queryKey: readonly unknown[],
   fetchPage: (page: number) => Promise<PageResult<T>>,
   { enabled = true }: Options = {},
 ) {
-  const [items, setItems] = useState<T[]>([]);
-  const [count, setCount] = useState<number | null>(null);
-  const [hasMore, setHasMore] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [error, setError] = useState(false);
-  const [loadMoreError, setLoadMoreError] = useState(false);
+  const query = useInfiniteQuery({
+    queryKey,
+    queryFn: ({ pageParam }) => fetchPage(pageParam),
+    initialPageParam: 1,
+    getNextPageParam: (last, all) => (last.next ? all.length + 1 : undefined),
+    enabled,
+  });
 
-  const latest = useRef(0);
-  const nextPage = useRef(1);
-  const busy = useRef(false);
-  const hasMoreRef = useRef(false);
-
-  const loadFirst = useCallback(
-    async (mode: "initial" | "refresh") => {
-      const id = ++latest.current;
-      busy.current = true;
-      if (mode === "refresh") setIsRefreshing(true);
-      else setIsLoading(true);
-      setIsLoadingMore(false);
-      setError(false);
-      setLoadMoreError(false);
-
-      try {
-        const res = await fetchPage(1);
-        if (id !== latest.current) return;
-        nextPage.current = 2;
-        hasMoreRef.current = Boolean(res.next);
-        setItems(res.results);
-        setCount(res.count ?? null);
-        setHasMore(hasMoreRef.current);
-      } catch {
-        if (id !== latest.current) return;
-        setError(true);
-        if (mode === "initial") {
-          setItems([]);
-          setCount(null);
-          hasMoreRef.current = false;
-          setHasMore(false);
+  const items = useMemo(() => {
+    const seen = new Set<string>();
+    const out: T[] = [];
+    for (const page of query.data?.pages ?? []) {
+      for (const item of page.results) {
+        if (!seen.has(item.id)) {
+          seen.add(item.id);
+          out.push(item);
         }
-      } finally {
-        if (id === latest.current) {
-          busy.current = false;
-          setIsLoading(false);
-          setIsRefreshing(false);
-        }
-      }
-    },
-    [fetchPage],
-  );
-
-  const loadMore = useCallback(async () => {
-    if (busy.current || !hasMoreRef.current) return;
-    const id = latest.current;
-    busy.current = true;
-    setIsLoadingMore(true);
-    setLoadMoreError(false);
-
-    try {
-      const res = await fetchPage(nextPage.current);
-      if (id !== latest.current) return;
-      nextPage.current += 1;
-      hasMoreRef.current = Boolean(res.next);
-      setItems((prev) => {
-        const seen = new Set(prev.map((i) => i.id));
-        return [...prev, ...res.results.filter((i) => !seen.has(i.id))];
-      });
-      if (res.count != null) setCount(res.count);
-      setHasMore(hasMoreRef.current);
-    } catch {
-      if (id !== latest.current) return;
-      setLoadMoreError(true);
-    } finally {
-      if (id === latest.current) {
-        busy.current = false;
-        setIsLoadingMore(false);
       }
     }
-  }, [fetchPage]);
+    return out;
+  }, [query.data]);
 
-  // Runs on mount and again whenever a filter changes.
-  useEffect(() => {
-    if (enabled) loadFirst("initial");
-  }, [enabled, loadFirst]);
-
-  const reload = useCallback(() => loadFirst("initial"), [loadFirst]);
-  const refresh = useCallback(() => loadFirst("refresh"), [loadFirst]);
+  const pages = query.data?.pages ?? [];
+  const count = pages.length > 0 ? pages[pages.length - 1].count ?? null : null;
 
   return {
     items,
     count,
-    hasMore,
-    isLoading,
-    isLoadingMore,
-    isRefreshing,
-    error,
-    loadMoreError,
-    loadMore,
-    reload,
-    refresh,
+    hasMore: Boolean(query.hasNextPage),
+    isLoading: query.isPending,
+    isLoadingMore: query.isFetchingNextPage,
+    isRefreshing: query.isRefetching && !query.isFetchingNextPage,
+    error: query.isError && !query.isFetchNextPageError,
+    loadMoreError: query.isFetchNextPageError,
+    loadMore: () => {
+      if (query.hasNextPage && !query.isFetchingNextPage) query.fetchNextPage();
+    },
+    reload: () => {
+      query.refetch();
+    },
+    refresh: () => {
+      query.refetch();
+    },
   };
 }

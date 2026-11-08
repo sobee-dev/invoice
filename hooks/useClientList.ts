@@ -13,7 +13,7 @@ interface UseClientListOptions {
 
 // One page of clients at a time. Search, status and sort run on the server, so
 // they cover every client and not only the ones already loaded.
-// useCustomers is left as it was for pages that need the full list.
+// useCustomers is left for pages that need the full list.
 export function useClientList({ search = "", status = "all", sort }: UseClientListOptions) {
   const fetchPage = useCallback(
     (page: number) =>
@@ -26,5 +26,5 @@ export function useClientList({ search = "", status = "all", sort }: UseClientLi
     [search, status, sort],
   );
 
-  return usePaginatedList<Customer>(fetchPage);
+  return usePaginatedList<Customer>(["customers", "list", { search, status, sort }], fetchPage);
 }

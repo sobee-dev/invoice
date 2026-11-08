@@ -1,42 +1,55 @@
 // hooks/useStaff.ts
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Invitation, StaffMember, staffService } from "@/services/staff";
 
-export function useStaff() {
-  const [members, setMembers] = useState<StaffMember[]>([]);
+interface StaffData {
+  members: StaffMember[];
   // null means the invitations could not be loaded, which is different from having none.
-  const [invitations, setInvitations] = useState<Invitation[] | null>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(false);
+  invitations: Invitation[] | null;
+}
 
-  const load = useCallback(async () => {
-    setIsLoading(true);
-    setError(false);
+const staffKey = ["staff"] as const;
 
-    // Each call fails on its own, so a bad invitations call never hides the team.
-    const [m, i] = await Promise.allSettled([staffService.list(), staffService.listInvitations()]);
+async function fetchStaff(): Promise<StaffData> {
+  // Each call fails on its own, so a bad invitations call never hides the team.
+  const [m, i] = await Promise.allSettled([staffService.list(), staffService.listInvitations()]);
+  if (m.status === "rejected") throw m.reason;
+  return { members: m.value, invitations: i.status === "fulfilled" ? i.value : null };
+}
 
-    if (m.status === "fulfilled") {
-      setMembers(m.value);
-    } else {
-      setMembers([]);
-      setError(true);
-    }
-    setInvitations(i.status === "fulfilled" ? i.value : null);
-    setIsLoading(false);
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
+export function useStaff() {
+  const queryClient = useQueryClient();
+  const query = useQuery({ queryKey: staffKey, queryFn: fetchStaff });
 
   const patchMember = useCallback(
     (id: string, patch: Partial<StaffMember>) =>
-      setMembers((prev) => prev.map((m) => (m.id === id ? { ...m, ...patch } : m))),
-    [],
+      queryClient.setQueryData<StaffData>(staffKey, (old) =>
+        old ? { ...old, members: old.members.map((m) => (m.id === id ? { ...m, ...patch } : m)) } : old,
+      ),
+    [queryClient],
   );
 
-  return { members, invitations, setInvitations, isLoading, error, reload: load, patchMember };
+  const setInvitations = useCallback(
+    (next: Invitation[] | null | ((prev: Invitation[] | null) => Invitation[] | null)) =>
+      queryClient.setQueryData<StaffData>(staffKey, (old) => {
+        if (!old) return old;
+        return { ...old, invitations: typeof next === "function" ? next(old.invitations) : next };
+      }),
+    [queryClient],
+  );
+
+  return {
+    members: query.data?.members ?? [],
+    invitations: query.data ? query.data.invitations : [],
+    setInvitations,
+    isLoading: query.isPending,
+    error: query.isError,
+    reload: () => {
+      query.refetch();
+    },
+    patchMember,
+  };
 }

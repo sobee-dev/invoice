@@ -1,7 +1,7 @@
 // app/(owner)/products/[id]/page.tsx
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Icon } from "@/components/layout/Icon";
@@ -13,12 +13,11 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { SectionCard } from "@/components/ui/SectionCard";
 import { btnAmber, btnNavy, btnOutline } from "@/components/ui/buttonStyles";
 import { useBusiness } from "@/context/BusinessContext";
+import { useDetailQuery } from "@/hooks/useDetailQuery";
 import { normalizeProduct, ProductData } from "@/lib/products";
 import { productService } from "@/services/products";
 import { resolveCurrency } from "@/utils/currencySymbol";
 import { fmtMoney } from "@/utils/money";
-
-type LoadState = "loading" | "ready" | "missing" | "error";
 
 function Metric({ label, value, highlight = false }: { label: string; value: number; highlight?: boolean }) {
   return (
@@ -34,23 +33,11 @@ export default function ProductDetailPage() {
   const { business } = useBusiness();
   const symbol = business?.currency ? resolveCurrency(business.currency).symbol : "";
 
-  const [product, setProduct] = useState<ProductData | null>(null);
-  const [state, setState] = useState<LoadState>("loading");
+  // Same key as the history page, so moving between the two costs no request.
+  const { data: product, state } = useDetailQuery<ProductData>(["products", "detail", id], async () =>
+    normalizeProduct(await productService.get(id)),
+  );
   const [adjustOpen, setAdjustOpen] = useState(false);
-
-  const load = useCallback(async () => {
-    try {
-      setProduct(normalizeProduct(await productService.get(id)));
-      setState("ready");
-    } catch (err: any) {
-      setState(err?.response?.status === 404 ? "missing" : "error");
-    }
-  }, [id]);
-
-  useEffect(() => {
-    setState("loading");
-    load();
-  }, [load]);
 
   if (state === "loading") {
     return <div className="h-64 animate-pulse rounded-xl border border-outline-variant bg-surface-container-low" />;
@@ -108,7 +95,6 @@ export default function ProductDetailPage() {
       )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-
         <div>
           <div className="flex items-center justify-center rounded-xl border border-outline-variant bg-white p-6 shadow-card">
             <ProductThumb imageUrl={product.imageUrl} name={product.name} size={240} />
@@ -116,10 +102,7 @@ export default function ProductDetailPage() {
         </div>
 
         <div className="space-y-6 lg:col-span-2">
-          <SectionCard
-            title="Inventory overview"
-            action={<StockChip product={product} />}
-          >
+          <SectionCard title="Inventory overview" action={<StockChip product={product} />}>
             <div className="grid grid-cols-3 gap-3">
               <Metric label="On hand" value={product.quantityOnHand} />
               <Metric label="Sold" value={product.totalSold} />
@@ -146,17 +129,16 @@ export default function ProductDetailPage() {
             </dl>
           </SectionCard>
         </div>
-
-        
       </div>
 
+      {/* The stock adjustment is a write, so the cache refreshes itself afterwards. */}
       <AdjustStockModal
         open={adjustOpen}
         productId={product.id}
         productName={product.name}
         currentStock={product.quantityOnHand}
         onClose={() => setAdjustOpen(false)}
-        onSaved={load}
+        onSaved={() => undefined}
       />
     </div>
   );

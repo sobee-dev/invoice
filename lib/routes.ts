@@ -31,6 +31,9 @@ export const ROUTES = {
   staffProfile: "/staff/profile",
   staffNewSalesInvoice: "/staff/new-sales-invoice",
   staffNewDocument: "/staff/new-document",
+  // Staff with managerial access only
+  staffProducts: "/staff/products",
+  staffNewProduct: "/staff/products/new",
 } as const;
 
 /** Payment history for one invoice: items, payments and returns. */
@@ -41,6 +44,9 @@ export const clientPaymentsRoute = (customerId: string) => `/clients/${customerI
 
 /** A single document inside the staff area. */
 export const staffDocRoute = (documentId: string) => `/staff/docs/${documentId}`;
+
+/** A single product inside the staff area (read only). */
+export const staffProductRoute = (productId: string) => `/staff/products/${productId}`;
 
 export function homeForRole(role?: string | null): string {
   return role === "owner" ? ROUTES.ownerHome : ROUTES.staffHome;

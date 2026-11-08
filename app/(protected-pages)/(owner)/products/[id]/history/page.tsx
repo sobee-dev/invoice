@@ -1,7 +1,7 @@
 // app/(owner)/products/[id]/history/page.tsx
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Icon } from "@/components/layout/Icon";
@@ -10,9 +10,11 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { btnAmber, btnNavy, btnOutline } from "@/components/ui/buttonStyles";
 import { useBusiness } from "@/context/BusinessContext";
-import { cursorFromUrl, groupByDate, HISTORY_TABS, timeLabel, TX_META } from "@/lib/inventory";
+import { useDetailQuery } from "@/hooks/useDetailQuery";
+import { useProductHistory } from "@/hooks/useProductHistory";
+import { groupByDate, HISTORY_TABS, timeLabel, TX_META } from "@/lib/inventory";
 import { normalizeProduct, ProductData } from "@/lib/products";
-import { inventoryService, InventoryTransaction, TransactionType } from "@/services/inventory";
+import { TransactionType } from "@/services/inventory";
 import { productService } from "@/services/products";
 import { resolveCurrency } from "@/utils/currencySymbol";
 import { fmtMoney } from "@/utils/money";
@@ -22,64 +24,26 @@ export default function InventoryHistoryPage() {
   const { business } = useBusiness();
   const symbol = business?.currency ? resolveCurrency(business.currency).symbol : "";
 
-  const [product, setProduct] = useState<ProductData | null>(null);
-  const [txs, setTxs] = useState<InventoryTransaction[]>([]);
-  const [nextCursor, setNextCursor] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [error, setError] = useState(false);
+  const { data: product, state: productState, reload: reloadProduct } = useDetailQuery<ProductData>(
+    ["products", "detail", id],
+    async () => normalizeProduct(await productService.get(id)),
+  );
+  const history = useProductHistory(id);
+  const txs = history.items;
+
   const [tab, setTab] = useState<TransactionType | "all">("all");
   const [adjustOpen, setAdjustOpen] = useState(false);
-  const latest = useRef(0);
-
-  const load = useCallback(async () => {
-    const request = ++latest.current;
-    setError(false);
-    try {
-      const [p, history] = await Promise.all([productService.get(id), inventoryService.getHistory(id)]);
-      if (request !== latest.current) return;
-      setProduct(normalizeProduct(p));
-      setTxs(history.results);
-      setNextCursor(cursorFromUrl(history.next));
-    } catch {
-      if (request === latest.current) setError(true);
-    } finally {
-      if (request === latest.current) setIsLoading(false);
-    }
-  }, [id]);
-
-  useEffect(() => {
-    setIsLoading(true);
-    load();
-  }, [load]);
-
-  const loadMore = async () => {
-    if (!nextCursor || isLoadingMore) return;
-    setIsLoadingMore(true);
-    try {
-      const history = await inventoryService.getHistory(id, nextCursor);
-      setTxs((prev) => {
-        const seen = new Set(prev.map((t) => t.id));
-        return [...prev, ...history.results.filter((t) => !seen.has(t.id))];
-      });
-      setNextCursor(cursorFromUrl(history.next));
-    } catch {
-      setError(true);
-    } finally {
-      setIsLoadingMore(false);
-    }
-  };
 
   const groups = useMemo(
     () => groupByDate(tab === "all" ? txs : txs.filter((t) => t.transactionType === tab)),
     [txs, tab],
   );
 
-  if (isLoading) {
+  if (productState === "loading" || history.isLoading) {
     return <div className="h-64 animate-pulse rounded-xl border border-outline-variant bg-surface-container-low" />;
   }
 
-  if (error && !product) {
+  if (productState !== "ready" || !product || (history.error && txs.length === 0)) {
     return (
       <div className="rounded-xl border border-outline-variant bg-white shadow-card">
         <EmptyState
@@ -87,7 +51,14 @@ export default function InventoryHistoryPage() {
           title="We could not load this history"
           description="Please check your connection and try again."
           action={
-            <button type="button" onClick={load} className={btnNavy}>
+            <button
+              type="button"
+              onClick={() => {
+                reloadProduct();
+                history.reload();
+              }}
+              className={btnNavy}
+            >
               Try again
             </button>
           }
@@ -99,7 +70,7 @@ export default function InventoryHistoryPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title={product?.name ?? "Inventory history"}
+        title={product.name}
         subtitle="Every sale, purchase and adjustment for this product."
         backHref={`/products/${id}`}
         backLabel="Product"
@@ -110,20 +81,18 @@ export default function InventoryHistoryPage() {
         }
       />
 
-      {product && (
-        <div className="grid grid-cols-2 overflow-hidden rounded-xl border border-outline-variant bg-white shadow-card">
-          <div className="border-r border-outline-variant p-5">
-            <p className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Current stock</p>
-            <p className="mt-2 text-2xl font-extrabold text-on-surface">{product.quantityOnHand} units</p>
-          </div>
-          <div className="p-5 text-right">
-            <p className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Value</p>
-            <p className="mt-2 text-2xl font-extrabold text-primary-container">
-              {fmtMoney(product.unitPrice * product.quantityOnHand, symbol, 2)}
-            </p>
-          </div>
+      <div className="grid grid-cols-2 overflow-hidden rounded-xl border border-outline-variant bg-white shadow-card">
+        <div className="border-r border-outline-variant p-5">
+          <p className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Current stock</p>
+          <p className="mt-2 text-2xl font-extrabold text-on-surface">{product.quantityOnHand} units</p>
         </div>
-      )}
+        <div className="p-5 text-right">
+          <p className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Value</p>
+          <p className="mt-2 text-2xl font-extrabold text-primary-container">
+            {fmtMoney(product.unitPrice * product.quantityOnHand, symbol, 2)}
+          </p>
+        </div>
+      </div>
 
       <div className="flex flex-wrap gap-2" role="group" aria-label="Transaction type">
         {HISTORY_TABS.map((t) => {
@@ -201,27 +170,25 @@ export default function InventoryHistoryPage() {
         </div>
       )}
 
-      {(nextCursor || error) && (
+      {(history.hasMore || history.loadMoreError) && (
         <div className="flex items-center justify-center gap-4">
-          {error && <p className="text-body-md text-error">Could not load more transactions.</p>}
-          {nextCursor && (
-            <button type="button" onClick={loadMore} disabled={isLoadingMore} className={btnOutline}>
-              {isLoadingMore ? "Loading..." : "Load more"}
+          {history.loadMoreError && <p className="text-body-md text-error">Could not load more transactions.</p>}
+          {history.hasMore && (
+            <button type="button" onClick={history.loadMore} disabled={history.isLoadingMore} className={btnOutline}>
+              {history.isLoadingMore ? "Loading..." : "Load more"}
             </button>
           )}
         </div>
       )}
 
-      {product && (
-        <AdjustStockModal
-          open={adjustOpen}
-          productId={product.id}
-          productName={product.name}
-          currentStock={product.quantityOnHand}
-          onClose={() => setAdjustOpen(false)}
-          onSaved={load}
-        />
-      )}
+      <AdjustStockModal
+        open={adjustOpen}
+        productId={product.id}
+        productName={product.name}
+        currentStock={product.quantityOnHand}
+        onClose={() => setAdjustOpen(false)}
+        onSaved={() => undefined}
+      />
     </div>
   );
 }

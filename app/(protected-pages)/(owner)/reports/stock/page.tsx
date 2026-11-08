@@ -1,26 +1,34 @@
 // app/(owner)/reports/stock/page.tsx
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Icon } from "@/components/layout/Icon";
 import { ProductThumb } from "@/components/products/ProductThumb";
 import { StockChip } from "@/components/products/StockChip";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { LoadMoreFooter } from "@/components/ui/LoadMoreFooter";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { btnNavy } from "@/components/ui/buttonStyles";
 import { useBusiness } from "@/context/BusinessContext";
-import { useProducts } from "@/hooks/useProducts";
+import { useInventoryTotals } from "@/hooks/useInventoryTotals";
+import { useProductList } from "@/hooks/useProductList";
 import { ProductData, StockState, stockState } from "@/lib/products";
 import { ROUTES } from "@/lib/routes";
 import { resolveCurrency } from "@/utils/currencySymbol";
 import { fmtMoney } from "@/utils/money";
 
-type Filter = "all" | "critical" | "ok";
+type Filter = "all" | "ok" | "low" | "out";
 
-const SORT_ORDER: Record<StockState, number> = { out: 0, low: 1, ok: 2 };
+const FILTERS: { key: Filter; label: string }[] = [
+  { key: "all", label: "All" },
+  { key: "ok", label: "In stock" },
+  { key: "low", label: "Low stock" },
+  { key: "out", label: "Out of stock" },
+];
+
 const BAR_COLOR: Record<StockState, string> = { out: "bg-error", low: "bg-status-warn-fg", ok: "bg-status-paid-fg" };
 
-function Pill({ label, value, accent }: { label: string; value: number; accent: string }) {
+function Pill({ label, value, accent }: { label: string; value: string; accent: string }) {
   return (
     <div className="rounded-xl border border-outline-variant bg-white p-5 text-center shadow-card">
       <p className={`text-3xl font-extrabold ${accent}`}>{value}</p>
@@ -74,28 +82,89 @@ function StockRow({ product }: { product: ProductData }) {
 
 export default function StockReportPage() {
   const { business } = useBusiness();
-  const { products, isLoading, error, reload } = useProducts();
   const [filter, setFilter] = useState<Filter>("all");
 
   const symbol = business?.currency ? resolveCurrency(business.currency).symbol : "";
 
-  const outCount = products.filter((p) => stockState(p) === "out").length;
-  const lowCount = products.filter((p) => stockState(p) === "low").length;
-  const totalValue = products.reduce((sum, p) => sum + p.unitPrice * p.quantityOnHand, 0);
+  // The figures at the top come from one server call and cover every product.
+  const { totals, isLoading: totalsLoading, reload: reloadTotals } = useInventoryTotals();
 
-  const rows = useMemo(() => {
-    const sorted = [...products].sort((a, b) => SORT_ORDER[stockState(a)] - SORT_ORDER[stockState(b)]);
-    if (filter === "critical") return sorted.filter((p) => stockState(p) !== "ok");
-    if (filter === "ok") return sorted.filter((p) => stockState(p) === "ok");
-    return sorted;
-  }, [products, filter]);
+  // The list below loads a page at a time, filtered on the server.
+  const {
+    items,
+    count,
+    hasMore,
+    isLoading,
+    isLoadingMore,
+    error,
+    loadMoreError,
+    loadMore,
+    reload,
+    } = useProductList({ stock: filter === "all" ? undefined : filter });
+
+  const dash = totalsLoading ? "..." : "—";
+  const low = totals?.low ?? 0;
+  const out = totals?.out ?? 0;
 
   return (
     <div className="space-y-6">
       <PageHeader title="Stock report" subtitle="Current inventory levels." backHref={ROUTES.reports} backLabel="Reports" />
 
-      {error ? (
-        <div className="rounded-xl border border-outline-variant bg-white shadow-card">
+      <div className="grid grid-cols-3 gap-4">
+        <Pill
+          label="Total products"
+          value={totals ? totals.productCount.toLocaleString() : dash}
+          accent="text-primary-container"
+        />
+        <Pill
+          label="Low stock"
+          value={totals ? String(low) : dash}
+          accent={low > 0 ? "text-status-warn-fg" : "text-status-paid-fg"}
+        />
+        <Pill
+          label="Out of stock"
+          value={totals ? String(out) : dash}
+          accent={out > 0 ? "text-error" : "text-status-paid-fg"}
+        />
+      </div>
+
+      <div className="flex items-center justify-between rounded-xl bg-primary-container p-6 text-white shadow-card">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider text-white/60">Total inventory value</p>
+          <p className="mt-1 text-3xl font-extrabold">
+            {totals ? fmtMoney(Number(totals.totalValue), symbol, 2) : dash}
+          </p>
+          {!totalsLoading && !totals && (
+            <button type="button" onClick={reloadTotals} className="mt-2 text-xs font-semibold text-white/80 underline">
+              Try again
+            </button>
+          )}
+        </div>
+        <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/15">
+          <Icon name="inventory" size={28} />
+        </span>
+      </div>
+
+      <div className="flex flex-wrap gap-2" role="group" aria-label="Stock filter">
+        {FILTERS.map((f) => (
+          <button
+            key={f.key}
+            type="button"
+            aria-pressed={filter === f.key}
+            onClick={() => setFilter(f.key)}
+            className={`rounded-full border px-4 py-2 text-sm transition-colors ${
+              filter === f.key
+                ? "border-primary-container bg-primary-container font-bold text-white"
+                : "border-outline-variant bg-white font-medium text-on-surface hover:bg-surface-container-low"
+            }`}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+
+      <section className="rounded-xl border border-outline-variant bg-white shadow-card">
+        {error ? (
           <EmptyState
             icon="cloud_off"
             title="We could not load your stock report"
@@ -106,62 +175,29 @@ export default function StockReportPage() {
               </button>
             }
           />
-        </div>
-      ) : (
-        <>
-          <div className="grid grid-cols-3 gap-4">
-            <Pill label="Total products" value={products.length} accent="text-primary-container" />
-            <Pill label="Low stock" value={lowCount} accent={lowCount > 0 ? "text-status-warn-fg" : "text-status-paid-fg"} />
-            <Pill label="Out of stock" value={outCount} accent={outCount > 0 ? "text-error" : "text-status-paid-fg"} />
-          </div>
-
-          <div className="flex items-center justify-between rounded-xl bg-primary-container p-6 text-white shadow-card">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-white/60">Total inventory value</p>
-              <p className="mt-1 text-3xl font-extrabold">{isLoading ? "..." : fmtMoney(totalValue, symbol, 2)}</p>
-            </div>
-            <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/15">
-              <Icon name="inventory" size={28} />
-            </span>
-          </div>
-
-          <div className="flex flex-wrap gap-2" role="group" aria-label="Stock filter">
-            {([
-              ["all", "All"],
-              ["critical", "Critical"],
-              ["ok", "In stock"],
-            ] as const).map(([key, label]) => (
-              <button
-                key={key}
-                type="button"
-                aria-pressed={filter === key}
-                onClick={() => setFilter(key)}
-                className={`rounded-full border px-4 py-2 text-sm transition-colors ${
-                  filter === key
-                    ? "border-primary-container bg-primary-container font-bold text-white"
-                    : "border-outline-variant bg-white font-medium text-on-surface hover:bg-surface-container-low"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          <section className="rounded-xl border border-outline-variant bg-white shadow-card">
-            {isLoading ? (
-              <div className="h-48 animate-pulse rounded-xl bg-surface-container-low" />
-            ) : rows.length === 0 ? (
-              <EmptyState icon="check_circle" title="No products match this filter" />
-            ) : (
-              <ul className="divide-y divide-outline-variant">
-                {rows.map((p) => (
-                  <StockRow key={p.id} product={p} />
-                ))}
-              </ul>
-            )}
-          </section>
-        </>
-      )}
+        ) : isLoading ? (
+          <div className="h-48 animate-pulse rounded-xl bg-surface-container-low" />
+        ) : items.length === 0 ? (
+          <EmptyState icon="check_circle" title="No products match this filter" />
+        ) : (
+          <>
+            <ul className="divide-y divide-outline-variant">
+              {items.map((p) => (
+                <StockRow key={p.id} product={p} />
+              ))}
+            </ul>
+            <LoadMoreFooter
+              shown={items.length}
+              total={count}
+              noun="products"
+              hasMore={hasMore}
+              isLoadingMore={isLoadingMore}
+              loadMoreError={loadMoreError}
+              onLoadMore={loadMore}
+            />
+          </>
+        )}
+      </section>
     </div>
   );
 }

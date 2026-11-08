@@ -99,7 +99,7 @@ export function NewDocumentMenu({ customer, compact = false, variant = "owner" }
           aria-haspopup="menu"
           aria-expanded={open}
           onClick={() => setOpen((o) => !o)}
-          className="flex h-10 items-center gap-2 rounded-lg bg-secondary px-4 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+          className="flex h-10 items-center gap-2 rounded-lg bg-secondary px-4 text-sm font-semibold text-white transition-opacity hover:opacity-90 max-sm:h-8 max-sm:gap-1 max-sm:px-3 max-sm:text-xs"
         >
           <Icon name="add" size={18} /> New Document <Icon name="expand_more" size={18} />
         </button>
@@ -108,18 +108,18 @@ export function NewDocumentMenu({ customer, compact = false, variant = "owner" }
       {open && (
         <div
           role="menu"
-          className="absolute right-0 z-20 mt-2 w-80 overflow-hidden rounded-xl border border-outline-variant bg-white p-2 shadow-lg"
+          className="absolute right-0 z-20 mt-2 w-80 overflow-hidden rounded-xl border border-outline-variant bg-white p-2 shadow-lg max-sm:w-72"
         >
           {options.map((option) => {
             const locked = option.countsTowardLimit && invoicesLocked;
             const body = (
               <>
-                <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${option.tile}`}>
+                <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl max-sm:h-9 max-sm:w-9 max-sm:rounded-lg ${option.tile}`}>
                   <Icon name={option.icon} size={22} />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block text-sm font-bold text-on-surface">{option.title}</span>
-                  <span className="block text-xs text-on-surface-variant">
+                  <span className="block text-sm font-bold text-on-surface max-sm:text-xs">{option.title}</span>
+                  <span className="block text-xs text-on-surface-variant max-sm:text-[11px]">
                     {locked ? "Monthly invoice limit reached" : option.description}
                   </span>
                 </span>
@@ -133,7 +133,7 @@ export function NewDocumentMenu({ customer, compact = false, variant = "owner" }
                 type="button"
                 role="menuitem"
                 onClick={openLimit}
-                className="flex w-full items-center gap-3 rounded-lg p-3 text-left opacity-60 hover:bg-surface-container-low"
+                className="flex w-full items-center gap-3 rounded-lg p-3 text-left opacity-60 hover:bg-surface-container-low max-sm:p-2"
               >
                 {body}
               </button>
@@ -143,7 +143,7 @@ export function NewDocumentMenu({ customer, compact = false, variant = "owner" }
                 href={withCustomer(option.href, customer)}
                 role="menuitem"
                 onClick={() => setOpen(false)}
-                className="flex items-center gap-3 rounded-lg p-3 hover:bg-surface-container-low"
+                className="flex items-center gap-3 rounded-lg p-3 hover:bg-surface-container-low max-sm:p-2"
               >
                 {body}
               </Link>

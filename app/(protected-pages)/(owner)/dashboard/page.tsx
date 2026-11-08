@@ -21,7 +21,7 @@ import { fmtMoney } from "@/utils/money";
 export default function OwnerDashboardPage() {
   const { user } = useAuth();
   const { business } = useBusiness();
-  const { summary, report, customers, inventory, unpaidCount, isLoading, reload } = useDashboardData();
+  const { summary, report, customers, unpaidCount, isLoading, reload } = useDashboardData();
 
   const symbol = resolveCurrency(business?.currency ?? "USD").symbol;
   const dash = isLoading ? "..." : "—";
@@ -38,27 +38,44 @@ export default function OwnerDashboardPage() {
   const growth = report?.revenueGrowth;
   const hasGrowth = !!growth && growth !== "—";
 
+  const greetingName = user?.firstName || user?.email?.split("@")[0] || "Administrator";
+
   return (
-    <div>
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-headline-lg font-bold text-primary">
-            Welcome back, {user?.firstName || user?.email?.split("@")[0] || "Administrator"}
-          </h1>
+    // Mobile (<640px): flex column so sections can be reordered with `order-*`.
+    // sm and up: plain block, exactly like the original desktop layout.
+    <div className="flex flex-col sm:block">
+      {/* Header.
+          Mobile: business name, then the welcome line, then the New Document button below.
+          sm and up: the original heading with the button on the right. */}
+      <div className="flex flex-wrap items-end justify-between gap-4 max-sm:flex-col max-sm:items-start max-sm:gap-2">
+        {/* Mobile title block */}
+        <div className="sm:hidden">
+          <h1 className="text-lg font-bold text-primary">{business?.name || "..."}</h1>
+          <p className="mt-0.5 text-xs text-on-surface-variant">Welcome back, {greetingName}</p>
+        </div>
+
+        {/* Desktop title block (original) */}
+        <div className="hidden sm:block">
+          <h1 className="text-headline-lg font-bold text-primary">Welcome back, {greetingName}</h1>
           <p className="mt-1 text-body-lg text-on-surface-variant" suppressHydrationWarning>
             Overview for <span className="font-semibold text-xl text-primary">{business?.name || "..."} </span>, Today is{" "}
             {fmtLongDate()}
           </p>
         </div>
 
-        <div className="flex gap-3">
+        {/* `zoom` shrinks the button's text, padding and icon together on mobile only */}
+        <div className="flex gap-3 max-sm:[zoom:0.9]">
           <NewDocumentMenu />
         </div>
       </div>
 
-      <UsageBanner />
+      {/* Plan card: scaled down on mobile. `contents` = no wrapper at all on desktop. */}
+      <div className="contents max-sm:block max-sm:[zoom:0.85]">
+        <UsageBanner />
+      </div>
 
-      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      {/* Stats: untouched */}
+      <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <StatCard
           icon="payments" iconBg="bg-primary-fixed" iconColor="text-light-blue"
           label="Monthly Revenue"
@@ -81,7 +98,10 @@ export default function OwnerDashboardPage() {
           badge={summary ? { text: `${newClientsMonth} this month`, tone: "blue" } : undefined}
         />
         <StatCard
-          icon="error" iconBg="bg-error-container" iconColor="text-error"
+          icon={lowStock > 0 ? "warning" : "check_circle"}
+          iconBg={lowStock > 0 ? "bg-error-container" : "bg-[#e8f5e9]"}
+          iconColor={lowStock > 0 ? "text-error" : "text-[#2e7d32]"}
+          tone={summary ? (lowStock > 0 ? "alert" : "success") : "default"}
           label="Stock Alerts"
           value={summary ? `${lowStock} ${lowStock === 1 ? "Item" : "Items"}` : dash}
           sub={lowStock === 0 && summary ? "All items above threshold" : "Below safety threshold"}
@@ -89,36 +109,45 @@ export default function OwnerDashboardPage() {
         />
       </div>
 
-      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
+      {/* Chart + side cards. On mobile this comes after Recent Documents (order-2). */}
+      <div className="order-2 mt-6 grid grid-cols-1 gap-4 max-sm:gap-3 lg:grid-cols-3">
         <div className="lg:col-span-2">
+          {/* Not scaled here: chart sizing needs a change inside RevenueChart (see notes) */}
           <RevenueChart points={toRevenuePoints(series)} symbol={symbol} />
         </div>
-        <div className="flex flex-col gap-4">
-          <InventorySyncCard
-            title="Inventory Health"
-            description={
-              inventory
-                ? `${inventory.skuCount.toLocaleString()} products tracked, ${lowStock} below their safety threshold.`
-                : "Track stock levels and reorder before you run out."
-            }
-            ctaLabel="Manage Stock"
-            href={ROUTES.products}
-          />
-          <TopCustomers customers={toTopCustomers(customers?.topClients ?? [])} symbol={symbol} />
+        <div className="flex flex-col gap-4 max-sm:gap-3">
+          <div className="contents max-sm:block max-sm:[zoom:0.9]">
+            <InventorySyncCard
+              title="Inventory Health"
+              description={
+                summary && lowStock > 0
+                  ? `${lowStock} ${lowStock === 1 ? "product is" : "products are"} below the safety threshold. Restock before you run out.`
+                  : "Track stock levels and reorder before you run out."
+              }
+              ctaLabel="Manage Stock"
+              href={ROUTES.products}
+            />
+          </div>
+          <div className="contents max-sm:block max-sm:[zoom:0.9]">
+            <TopCustomers customers={toTopCustomers(customers?.topClients ?? [])} symbol={symbol} />
+          </div>
         </div>
       </div>
 
-      <div className="mt-6">
-        <RecentDocuments
-          docs={recentDocs}
-          fallbackCurrency={business?.currency ?? "USD"}
-          isLoading={isLoading}
-          failed={summaryFailed}
-          onRetry={reload}
-        />
+      {/* On mobile this moves up above the chart (order-1), like the app. */}
+      <div className="order-1 mt-6">
+        <div className="contents max-sm:block max-sm:[zoom:0.9]">
+          <RecentDocuments
+            docs={recentDocs}
+            fallbackCurrency={business?.currency ?? "USD"}
+            isLoading={isLoading}
+            failed={summaryFailed}
+            onRetry={reload}
+          />
+        </div>
       </div>
 
-      <AdBanner placement="dashboard-footer" className="mt-6" />
+      <AdBanner placement="dashboard-footer" className="order-3 mt-6" />
     </div>
   );
 }

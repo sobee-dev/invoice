@@ -23,14 +23,14 @@ export function AdBanner({ placement, className = "" }: { placement: AdPlacement
     <aside
       aria-label="Advertisement"
       data-ad-placement={placement}
-      className={`flex min-h-[90px] items-center justify-between gap-4 rounded-xl border border-dashed border-outline-variant bg-surface-container-low px-6 py-4 ${className}`}
+      className={`flex min-h-[90px] items-center justify-between gap-4 rounded-xl border border-dashed border-outline-variant bg-surface-container-low px-6 py-4 max-sm:min-h-[64px] max-sm:gap-3 max-sm:px-4 max-sm:py-3 ${className}`}
     >
       <div>
         <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-on-surface-variant">Ad</span>
-        <p className="mt-1 text-body-md text-on-surface-variant">Your ad could be here.</p>
+        <p className="mt-1 text-body-md text-on-surface-variant max-sm:text-xs">Your ad could be here.</p>
       </div>
       {canUpgrade && (
-        <Link href={ROUTES.billing} className="shrink-0 text-sm font-semibold text-primary hover:underline">
+        <Link href={ROUTES.billing} className="shrink-0 text-sm font-semibold text-primary hover:underline max-sm:text-xs">
           Remove ads
         </Link>
       )}

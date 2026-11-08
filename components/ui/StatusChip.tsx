@@ -13,7 +13,7 @@ export function StatusChip({ status }: { status: DocumentStatus }) {
   const style = STYLES[status] ?? STYLES.draft;
   return (
     <span
-      className={`inline-flex items-center rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wide ${style.classes}`}
+      className={`inline-flex items-center rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wide max-sm:px-2 max-sm:py-0.5 max-sm:text-[9px] ${style.classes}`}
     >
       {style.label}
     </span>

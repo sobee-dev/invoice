@@ -109,13 +109,13 @@ export function RecordPaymentDialog({
         if (e.target === e.currentTarget && !saving) onClose();
       }}
     >
-      <form onSubmit={submit} className="w-full max-w-md rounded-xl bg-white p-6 shadow-modal">
+      <form onSubmit={submit} className="w-full max-w-md rounded-xl bg-white p-6 shadow-modal max-sm:max-h-[92vh] max-sm:overflow-y-auto max-sm:p-4">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 id="record-payment-title" className="text-xl font-bold text-primary">
+            <h2 id="record-payment-title" className="text-xl font-bold text-primary max-sm:text-lg">
               Record payment
             </h2>
-            <p className="mt-0.5 text-sm text-on-surface-variant">{customerName}</p>
+            <p className="mt-0.5 text-sm text-on-surface-variant max-sm:text-xs">{customerName}</p>
           </div>
           <button
             type="button"
@@ -128,16 +128,16 @@ export function RecordPaymentDialog({
           </button>
         </div>
 
-        <div className="mt-4 rounded-lg border border-outline-variant bg-surface-container-low p-3">
+        <div className="mt-4 rounded-lg border border-outline-variant bg-surface-container-low p-3 max-sm:mt-3 max-sm:p-2.5">
           <p className="text-xs text-on-surface-variant">
             {invoice ? `Applied to ${invoice.documentNumber}` : "Applied to the oldest unpaid invoices first"}
           </p>
-          <p className="mt-0.5 text-sm font-extrabold text-on-surface">
+          <p className="mt-0.5 text-sm font-extrabold text-on-surface max-sm:text-xs">
             {fmtMoney(maxAmount, symbol, 2)} outstanding
           </p>
         </div>
 
-        <div className="mt-4 space-y-4">
+        <div className="mt-4 space-y-4 max-sm:mt-3 max-sm:space-y-3">
           <div>
             <label htmlFor="pay-amount" className={labelClasses}>
               Amount ({symbol})
@@ -149,7 +149,7 @@ export function RecordPaymentDialog({
               value={amount}
               onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))}
               placeholder="0.00"
-              className={`${inputClasses} h-11`}
+              className={`${inputClasses} h-11 max-sm:h-10`}
             />
           </div>
 
@@ -162,7 +162,7 @@ export function RecordPaymentDialog({
                   type="button"
                   aria-pressed={method === m}
                   onClick={() => setMethod(m)}
-                  className={`rounded-full border px-3.5 py-1.5 text-sm transition-colors ${
+                  className={`rounded-full border px-3.5 py-1.5 text-sm transition-colors max-sm:px-3 max-sm:py-1 max-sm:text-xs ${
                     method === m
                       ? "border-primary-container bg-primary-container font-bold text-white"
                       : "border-outline-variant bg-white font-medium text-on-surface hover:bg-surface-container-low"
@@ -184,18 +184,18 @@ export function RecordPaymentDialog({
               onChange={(e) => setReference(e.target.value)}
               maxLength={100}
               placeholder="Transfer ref, receipt no."
-              className={`${inputClasses} h-11`}
+              className={`${inputClasses} h-11 max-sm:h-10`}
             />
           </div>
         </div>
 
         {error && (
-          <p role="alert" className="mt-4 rounded-lg border border-error/30 bg-error-container px-3 py-2 text-sm text-error">
+          <p role="alert" className="mt-4 rounded-lg border border-error/30 bg-error-container px-3 py-2 text-sm text-error max-sm:mt-3 max-sm:text-xs">
             {error}
           </p>
         )}
 
-        <div className="mt-6 flex justify-end gap-3">
+        <div className="mt-6 flex justify-end gap-3 max-sm:mt-4 max-sm:gap-2">
           <button type="button" onClick={onClose} disabled={saving} className={btnOutline}>
             Cancel
           </button>

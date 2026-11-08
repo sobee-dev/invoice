@@ -11,7 +11,7 @@ import { Product, productService } from "@/services/products";
 import { fmtMoney } from "@/utils/money";
 
 const GRID = "md:grid md:grid-cols-[minmax(0,1fr)_100px_130px_130px_44px] md:items-start md:gap-3";
-const mobileLabel = "mb-1 block text-xs font-semibold uppercase tracking-wider text-on-surface-variant md:hidden";
+const mobileLabel = "mb-1 block text-xs font-semibold uppercase tracking-wider text-on-surface-variant max-sm:text-[10px] md:hidden";
 
 interface ItemRowProps {
   item: FormLineItem;
@@ -44,7 +44,7 @@ function ItemRow({ item, symbol, invalid, disabled, autoFocus, canRemove, onChan
     });
 
   return (
-    <li className={`grid grid-cols-2 gap-3 py-4 ${GRID}`}>
+    <li className={`grid grid-cols-2 gap-3 py-4 max-sm:gap-2 max-sm:py-3 ${GRID}`}>
       <div className="col-span-2 md:col-span-1">
         <span className={mobileLabel}>Item</span>
         <Autocomplete
@@ -65,13 +65,13 @@ function ItemRow({ item, symbol, invalid, disabled, autoFocus, canRemove, onChan
           autoFocus={autoFocus}
         />
         {item.productId ? (
-          <p className="mt-1 text-xs text-on-surface-variant">
+          <p className="mt-1 text-xs text-on-surface-variant max-sm:text-[11px]">
             Matched to an existing product{item.qtyOnHand !== undefined ? `, ${item.qtyOnHand} in stock` : ""}.
           </p>
         ) : (
-          item.name.trim() && <p className="mt-1 text-xs text-on-surface-variant">New product, created when you save.</p>
+          item.name.trim() && <p className="mt-1 text-xs text-on-surface-variant max-sm:text-[11px]">New product, created when you save.</p>
         )}
-        {overStock && <p className="mt-1 text-xs font-semibold text-status-warn-fg">Only {item.qtyOnHand} in stock.</p>}
+        {overStock && <p className="mt-1 text-xs font-semibold text-status-warn-fg max-sm:text-[11px]">Only {item.qtyOnHand} in stock.</p>}
       </div>
 
       <div>
@@ -83,7 +83,7 @@ function ItemRow({ item, symbol, invalid, disabled, autoFocus, canRemove, onChan
           disabled={disabled}
           onChange={(e) => onChange({ qtyStr: sanitizeDecimal(e.target.value) })}
           aria-invalid={(invalid && qty <= 0) || undefined}
-          className={`${inputClasses} h-11 ${invalid && qty <= 0 ? "border-error" : ""}`}
+          className={`${inputClasses} h-11 max-sm:h-10 max-sm:text-sm ${invalid && qty <= 0 ? "border-error" : ""}`}
         />
       </div>
 
@@ -102,7 +102,7 @@ function ItemRow({ item, symbol, invalid, disabled, autoFocus, canRemove, onChan
             e.currentTarget.style.height = `${e.currentTarget.scrollHeight}px`;
           }}
           aria-invalid={(invalid && item.priceStr.trim() === "") || undefined}
-          className={`${inputClasses} min-h-11 resize-none overflow-hidden wrap-anywhere py-2.5 leading-tight ${
+          className={`${inputClasses} min-h-11 max-sm:min-h-10 max-sm:text-sm resize-none overflow-hidden wrap-anywhere py-2.5 leading-tight ${
             invalid && item.priceStr.trim() === "" ? "border-error" : ""
           }`}
         />
@@ -110,7 +110,7 @@ function ItemRow({ item, symbol, invalid, disabled, autoFocus, canRemove, onChan
 
       <div className="col-span-2 md:col-span-1">
         <span className={mobileLabel}>Total</span>
-        <div className="flex min-h-11 items-center justify-end wrap-anywhere rounded-lg bg-primary-container px-3 py-2 text-right text-sm font-extrabold leading-tight text-white">
+        <div className="flex min-h-11 items-center justify-end max-sm:min-h-10 wrap-anywhere rounded-lg bg-primary-container px-3 py-2 text-right text-sm font-extrabold leading-tight text-white max-sm:text-xs">
           {fmtMoney(total, symbol, 2)}
         </div>
       </div>
@@ -121,9 +121,9 @@ function ItemRow({ item, symbol, invalid, disabled, autoFocus, canRemove, onChan
           aria-label="Remove item"
           onClick={onRemove}
           disabled={disabled || !canRemove}
-          className="flex h-11 w-11 items-center justify-center rounded-lg bg-error-container text-error hover:opacity-80 disabled:opacity-40"
+          className="flex h-11 w-11 items-center justify-center rounded-lg bg-error-container text-error hover:opacity-80 disabled:opacity-40 max-sm:h-10 max-sm:w-10"
         >
-          <Icon name="delete" size={18} />
+          <Icon name="delete" size={18} mobileSize={16} />
         </button>
       </div>
     </li>

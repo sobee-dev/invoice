@@ -26,7 +26,7 @@ export function CurrencyField({ id, value, onChange, disabled = false }: Currenc
             ? onChange({ ...value, custom: true })
             : onChange({ code: e.target.value, custom: false, symbol: "" })
         }
-        className={`${inputClasses} h-11`}
+        className={`${inputClasses} h-11 max-sm:h-10 max-sm:text-sm`}
       >
         {GLOBAL_CURRENCIES.map((c) => (
           <option key={c.code} value={c.code}>
@@ -44,7 +44,7 @@ export function CurrencyField({ id, value, onChange, disabled = false }: Currenc
           onChange={(e) => onChange({ ...value, symbol: e.target.value })}
           aria-label="Custom currency symbol"
           placeholder="Currency symbol, for example ¥"
-          className={`${inputClasses} h-11`}
+          className={`${inputClasses} h-11 max-sm:h-10 max-sm:text-sm`}
         />
       )}
     </div>

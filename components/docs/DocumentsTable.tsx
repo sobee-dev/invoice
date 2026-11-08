@@ -162,29 +162,29 @@ export function DocumentsTable({
         </table>
       </div>
 
-      <ul className="space-y-3 p-4 md:hidden">
+      <ul className="space-y-3 p-4 max-sm:space-y-2 max-sm:p-3 md:hidden">
         {rows.map((row) => {
           const v = prepare(row);
           return (
-            <li key={row.id} className="rounded-xl border border-outline-variant/50 bg-white p-4 shadow-card">
+            <li key={row.id} className="rounded-xl border border-outline-variant/50 bg-white p-4 shadow-card max-sm:p-3">
               <div className="flex items-start justify-between gap-3">
-                <Link href={v.detailHref} className="text-xs font-bold uppercase tracking-wide text-primary-container hover:underline">
+                <Link href={v.detailHref} className="text-xs font-bold uppercase tracking-wide text-primary-container hover:underline max-sm:text-[11px]">
                   {v.number}
                 </Link>
-                <p className="text-lg font-extrabold text-on-surface">{v.amount}</p>
+                <p className="text-lg font-extrabold text-on-surface max-sm:text-base">{v.amount}</p>
               </div>
               <div className="mt-1 flex flex-wrap items-center gap-2">
-                <p className="font-bold text-on-surface">{row.counterparty || "-"}</p>
-                <span className="rounded-full bg-primary-container px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                <p className="font-bold text-on-surface max-sm:text-sm">{row.counterparty || "-"}</p>
+                <span className="rounded-full bg-primary-container px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white max-sm:px-1.5 max-sm:text-[9px]">
                   {TYPE_LABEL[row.documentType] ?? row.documentType}
                 </span>
               </div>
               <div className="mt-3 flex items-center justify-between gap-2">
-                <p className="text-xs text-on-surface-variant">
+                <p className="text-xs text-on-surface-variant max-sm:text-[10px]">
                   {fmtShortDate(row.createdAt)}
                   {v.creator ? ` • ${v.creator}` : ""}
                 </p>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 max-sm:gap-1">
                   <StockBadge status={row.stockStatus} />
                   <StatusChip status={row.status} />
                   <RowMenu items={v.menu} openUp />

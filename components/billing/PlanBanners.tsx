@@ -28,12 +28,12 @@ export function TrialBanner() {
   if (!subscription || !level) return null;
 
   return (
-    <div role="status" className={`mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl  px-5 py-3 ${TONE[level]}`}>
-      <span className="flex items-center gap-3 text-body-md font-medium">
+    <div role="status" className={`mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl  px-5 py-3 max-sm:mb-4 max-sm:gap-2 max-sm:px-3 max-sm:py-2 ${TONE[level]}`}>
+      <span className="flex items-center gap-3 text-body-md font-medium max-sm:gap-2 max-sm:text-xs">
         <Icon name={level === "final" ? "hourglass_bottom" : "schedule"} size={20} />
         {trialText(level, subscription.daysLeftInTrial ?? 0)}
       </span>
-      <Link href={ROUTES.billing} className="text-sm font-bold underline">
+      <Link href={ROUTES.billing} className="text-sm font-bold underline max-sm:text-xs">
         See plans
       </Link>
     </div>
@@ -50,16 +50,16 @@ export function UsageBanner() {
   return (
     <div
       role="status"
-      className={`mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border px-5 py-3 ${
+      className={`mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border px-5 py-3 max-sm:mt-3 max-sm:gap-2 max-sm:px-3 max-sm:py-2 ${
         atLimit ? "border-error/40 bg-error-container text-error" : "border-outline-variant bg-white text-on-surface"
       }`}
     >
-      <span className="flex flex-wrap items-center gap-x-6 gap-y-1 text-body-md">
+      <span className="flex flex-wrap items-center gap-x-6 gap-y-1 text-body-md max-sm:gap-x-3 max-sm:text-xs">
         <span className="font-semibold">Free plan</span>
         <span>{usageLine(subscription, "invoices")}</span>
         <span>{usageLine(subscription, "products")}</span>
       </span>
-      <Link href={ROUTES.billing} className="text-sm font-bold text-primary underline">
+      <Link href={ROUTES.billing} className="text-sm font-bold text-primary underline max-sm:text-xs">
         Upgrade
       </Link>
     </div>

@@ -56,6 +56,15 @@ export interface ProductCounts {
   inactive: number;
 }
 
+// Business-wide figures for active products, worked out on the server.
+export interface InventoryTotals {
+  totalValue:   number | string; // unit price times quantity on hand
+  productCount: number;
+  ok:           number;
+  low:          number;
+  out:          number;
+}
+
 export interface StockAdjustmentPayload {
   quantityChange: number; // positive = add stock, negative = remove
   reason: string;
@@ -82,6 +91,12 @@ export const productService = {
   /** One number per stock filter tab, without loading every product. */
   async counts(): Promise<ProductCounts> {
     const { data } = await api.get<ProductCounts>('/api/products/counts/');
+    return data;
+  },
+
+  /** Total stock value and stock health counts, without loading every product. */
+  async inventoryTotals(): Promise<InventoryTotals> {
+    const { data } = await api.get<InventoryTotals>('/api/products/inventory-totals/');
     return data;
   },
 

@@ -1,7 +1,8 @@
 // hooks/useDocuments.ts
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useMemo } from "react";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { DocumentRowData, DocumentStatus, DocumentType, fetchDocumentPage } from "@/lib/documents";
 
 interface UseDocumentsOptions {
@@ -13,62 +14,43 @@ interface UseDocumentsOptions {
 }
 
 export function useDocuments({ type, status, search = "", customer, enabled = true }: UseDocumentsOptions) {
-  const [rows, setRows] = useState<DocumentRowData[]>([]);
-  const [count, setCount] = useState<number | null>(null);
-  const [hasMore, setHasMore] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [error, setError] = useState(false);
+  const query = useInfiniteQuery({
+    queryKey: ["documents", "list", { type, status, search, customer: customer ?? null }],
+    queryFn: ({ pageParam }) => fetchDocumentPage({ page: pageParam, type, status, search, customer }),
+    initialPageParam: 1,
+    getNextPageParam: (last, all) => (last.hasMore ? all.length + 1 : undefined),
+    enabled,
+  });
 
-  // Only the newest request may write state, so a slow response for an old
-  // filter can never replace the current list.
-  const latest = useRef(0);
-  const loadedPage = useRef(1);
-
-  const load = useCallback(
-    async (page: number) => {
-      const id = ++latest.current;
-      if (page === 1) setIsLoading(true);
-      else setIsLoadingMore(true);
-      setError(false);
-
-      try {
-        const result = await fetchDocumentPage({ page, type, status, search, customer });
-        if (id !== latest.current) return;
-
-        loadedPage.current = page;
-        setRows((prev) => {
-          if (page === 1) return result.rows;
-          const seen = new Set(prev.map((r) => r.id));
-          return [...prev, ...result.rows.filter((r) => !seen.has(r.id))];
-        });
-        setCount(result.count);
-        setHasMore(result.hasMore);
-      } catch {
-        if (id !== latest.current) return;
-        setError(true);
-        if (page === 1) {
-          setRows([]);
-          setCount(null);
-          setHasMore(false);
-        }
-      } finally {
-        if (id === latest.current) {
-          setIsLoading(false);
-          setIsLoadingMore(false);
+  const rows = useMemo(() => {
+    const seen = new Set<string>();
+    const out: DocumentRowData[] = [];
+    for (const page of query.data?.pages ?? []) {
+      for (const row of page.rows) {
+        if (!seen.has(row.id)) {
+          seen.add(row.id);
+          out.push(row);
         }
       }
+    }
+    return out;
+  }, [query.data]);
+
+  const pages = query.data?.pages ?? [];
+  const count = pages.length > 0 ? pages[pages.length - 1].count : null;
+
+  return {
+    rows,
+    count,
+    hasMore: Boolean(query.hasNextPage),
+    isLoading: query.isPending,
+    isLoadingMore: query.isFetchingNextPage,
+    error: query.isError,
+    loadMore: () => {
+      if (query.hasNextPage && !query.isFetchingNextPage) query.fetchNextPage();
     },
-    [type, status, search, customer],
-  );
-
-  // Runs on mount and again whenever a filter changes.
-  useEffect(() => {
-    if (enabled) load(1);
-  }, [enabled, load]);
-
-  const loadMore = useCallback(() => load(loadedPage.current + 1), [load]);
-  const reload = useCallback(() => load(1), [load]);
-
-  return { rows, count, hasMore, isLoading, isLoadingMore, error, loadMore, reload };
+    reload: () => {
+      query.refetch();
+    },
+  };
 }
