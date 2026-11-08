@@ -5,9 +5,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Icon } from "@/components/layout/Icon";
 import { SidebarPlanCard } from "@/components/layout/SidebarPlanCard";
+import { useAuth } from "@/context/AuthContext";
 import { useSubscriptionContext } from "@/context/SubscriptionContext";
 import { canUseStaff } from "@/lib/plan";
 import { ROUTES } from "@/lib/routes";
+import { canManageProducts } from "@/lib/staffAccess";
 
 export type SidebarVariant = "owner" | "staff";
 
@@ -31,11 +33,11 @@ const SECONDARY_NAV: NavItem[] = [
   { key: "settings", label: "Settings", href: ROUTES.settings, icon: "settings" },
 ];
 
-const STAFF_NAV: NavItem[] = [
-  { key: "dashboard", label: "Dashboard", href: ROUTES.staffHome, icon: "dashboard" },
-  { key: "docs", label: "Docs", href: ROUTES.staffDocs, icon: "description" },
-  { key: "profile", label: "Profile", href: ROUTES.staffProfile, icon: "account_circle" },
-];
+const STAFF_DASHBOARD: NavItem = { key: "dashboard", label: "Dashboard", href: ROUTES.staffHome, icon: "dashboard" };
+const STAFF_DOCS: NavItem = { key: "docs", label: "Docs", href: ROUTES.staffDocs, icon: "description" };
+// Only shown to staff with managerial access.
+const STAFF_PRODUCTS: NavItem = { key: "products", label: "Products", href: ROUTES.staffProducts, icon: "inventory_2" };
+const STAFF_PROFILE: NavItem = { key: "profile", label: "Profile", href: ROUTES.staffProfile, icon: "account_circle" };
 
 interface SidebarProps {
   variant?: SidebarVariant;
@@ -46,9 +48,17 @@ interface SidebarProps {
 
 export function Sidebar({ variant = "owner", collapsed, mobileOpen, onNavigate }: SidebarProps) {
   const pathname = usePathname();
+  const { user } = useAuth();
   const { subscription } = useSubscriptionContext();
   const isStaff = variant === "staff";
   const staffLocked = !isStaff && !canUseStaff(subscription);
+
+  const staffNav: NavItem[] = [
+    STAFF_DASHBOARD,
+    STAFF_DOCS,
+    ...(canManageProducts(user) ? [STAFF_PRODUCTS] : []),
+    STAFF_PROFILE,
+  ];
 
   const renderItem = (item: NavItem) => {
     const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -84,7 +94,7 @@ export function Sidebar({ variant = "owner", collapsed, mobileOpen, onNavigate }
     >
       <nav aria-label="Main">
         {isStaff ? (
-          <ul className="space-y-1">{STAFF_NAV.map(renderItem)}</ul>
+          <ul className="space-y-1">{staffNav.map(renderItem)}</ul>
         ) : (
           <>
             <ul className="space-y-1">{MAIN_NAV.map(renderItem)}</ul>

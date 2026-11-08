@@ -22,6 +22,7 @@ export interface AuthUser {
   avatarColor?: string;
   hasBusiness?: boolean;
   fullName?: string;
+  permissionLevel?: 'managerial_access' | 'limited_access' | null;
   requiresPasswordChange?: boolean;
   emailNotifications: boolean;
   pushNotifications: boolean;

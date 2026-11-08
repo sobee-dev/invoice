@@ -38,11 +38,14 @@ export function RevenueChart({ points, symbol }: { points: RevenuePoint[]; symbo
 
               return (
                 <div key={`${p.label}-${i}`} className="relative flex-1" style={{ height: `${height}%` }}>
-                  {isLast && (
-                    <span className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-secondary px-2 py-1 text-[11px] font-semibold text-white max-sm:-top-7 max-sm:px-1.5 max-sm:py-0.5 max-sm:text-[9px]">
-                      {fmtCompact(p.value, symbol)}
-                    </span>
-                  )}
+                  {/* Every month shows its amount. The newest is amber, the rest are navy. */}
+                  <span
+                    className={`absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded px-2 py-1 text-[11px] font-semibold text-white max-sm:-top-7 max-sm:px-1 max-sm:py-0.5 max-sm:text-[8px] ${
+                      isLast ? "bg-secondary" : "bg-primary-container"
+                    }`}
+                  >
+                    {fmtCompact(p.value, symbol)}
+                  </span>
                   <div
                     className={`h-full w-full rounded-t-lg ${isLast ? "bg-secondary" : "bg-surface-tint"}`}
                     style={isLast ? undefined : { opacity }}

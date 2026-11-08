@@ -8,6 +8,16 @@ import { amountToWords, escapeHtml, makeCurrencyFormatter, PAGE_CSS } from './ht
 
 const A4_WIDTH = 595;
 
+// Layout constants for the repeating banners. The banners are `position: fixed`
+// (so they print on every page), which takes them out of the flow. The spacer
+// heights below are repeated by the outer table's thead/tfoot on every page so
+// real content never runs underneath a banner.
+const SIDE_MARGIN = 32;
+const TOP_BANNER_H = 10;
+const BOTTOM_BANNER_H = 16;
+const TOP_SPACER_H = TOP_BANNER_H + 26;
+const BOTTOM_SPACER_H = BOTTOM_BANNER_H + 24;
+
 const TYPE_LABEL: Record<DocumentType, string> = {
   sales_invoice:    'Sales Invoice',
   proforma_invoice: 'Proforma Invoice',
@@ -22,20 +32,23 @@ function bannerSvg(color: string, height: number, flipped = false): string {
   const gap = 10;
   const skew = height * 1.3;
 
+  // The mirrored (bottom) banner is drawn by flipping the x coordinates here,
+  // not with a CSS transform, so it rasterises correctly in the PDF download.
+  const mx = (x: number) => (flipped ? A4_WIDTH - x : x);
+
   const stripes = [0, 1, 2]
     .map(i => {
       const x = solidEnd + i * (stripeW + gap);
-      const d = `M${x},0 L${x + stripeW},0 L${x + stripeW - skew},${height} L${x - skew},${height} Z`;
+      const d = `M${mx(x)},0 L${mx(x + stripeW)},0 L${mx(x + stripeW - skew)},${height} L${mx(x - skew)},${height} Z`;
       const opacity = 1 - (i + 1) * 0.28;
       return `<path d="${d}" fill="${color}" opacity="${opacity}" />`;
     })
     .join('');
 
-  const solidPath = `M0,0 L${solidEnd},0 L${solidEnd - skew},${height} L0,${height} Z`;
-  const style = flipped ? ` style="transform: scaleX(-1);"` : '';
+  const solidPath = `M${mx(0)},0 L${mx(solidEnd)},0 L${mx(solidEnd - skew)},${height} L${mx(0)},${height} Z`;
 
   return `
-    <svg width="${A4_WIDTH}" height="${height}" viewBox="0 0 ${A4_WIDTH} ${height}"${style}>
+    <svg width="${A4_WIDTH}" height="${height}" viewBox="0 0 ${A4_WIDTH} ${height}" style="display:block;">
       <path d="${solidPath}" fill="${color}" />
       ${stripes}
     </svg>`;
@@ -65,26 +78,19 @@ export function buildProfessionalHtml(doc: Document, business: BusinessProfile):
     )
     .join('');
 
-  // `position: fixed` is what makes this repeat identically on every
-  // physical page the print engine generates — the same behaviour
-  // thead relies on for the repeating table header below. Extremely
-  // low opacity + print-color-adjust:exact (set in PAGE_CSS) so it
-  // survives export instead of being silently stripped as a
-  // "background" by the print renderer.
-  //
-  // `top` is offset past the banner + logo/business-name/address block
-  // (only present on page 1) so the watermark never renders behind it —
-  // it starts at Bill To and covers everything below, on every page,
-  // including continuation pages that have no header to avoid.
-  const HEADER_CLEARANCE = 190;
+  // Watermark lives INSIDE the items-list wrapper (position: relative), so it is
+  // centered within that section only and never bleeds into the header, Bill To,
+  // totals or signature. It is stretched to the full width AND height of the
+  // section (object-fit: fill, so it deliberately ignores the logo's aspect
+  // ratio). Rows have no background fill, so it reads through.
   const watermarkHtml = business.logoUrl ? `
-    <div style="
-      position: fixed; top: ${HEADER_CLEARANCE}px; left: 0; right: 0; bottom: 0;
-      display: flex; align-items: flex-start; justify-content: center;
-      z-index: 0; pointer-events: none;
-    ">
-      <img src="${business.logoUrl}" style="width:380px; height:380px; object-fit:contain; opacity:0.055;" />
-    </div>` : '';
+        <div style="
+          position:absolute; top:0; left:0; right:0; bottom:0;
+          display:flex; align-items:center; justify-content:center;
+          z-index:0; pointer-events:none;
+        ">
+          <img src="${business.logoUrl}" style="width:100%; height:100%; object-fit:fill; opacity:0.055;" />
+        </div>` : '';
 
   return `
 <html>
@@ -93,13 +99,32 @@ export function buildProfessionalHtml(doc: Document, business: BusinessProfile):
     <style>${PAGE_CSS}</style>
   </head>
   <body>
-    ${watermarkHtml}
 
-    <div style="position:relative; z-index:1; padding:0 32px;">
+    <!-- Top banner: fixed to the page's content box, so it sits inside the top
+         page margin and repeats on every page. Starts at the LEFT margin. -->
+    <div style="position:fixed; top:0; left:${SIDE_MARGIN}px; line-height:0; z-index:2;">
+      ${bannerSvg(brandColor, TOP_BANNER_H)}
+    </div>
 
-      ${bannerSvg(brandColor, 10)}
+    <!-- Bottom banner: fixed to the bottom of every page regardless of content.
+         Starts at the RIGHT margin (mirror of the top one). -->
+    <div style="position:fixed; bottom:0; right:${SIDE_MARGIN}px; line-height:0; z-index:2;">
+      ${bannerSvg(brandColor, BOTTOM_BANNER_H, true)}
+    </div>
 
-      <div style="padding-top:26px;">
+    <div style="position:relative; z-index:1; padding:0 ${SIDE_MARGIN}px;">
+
+      <!-- Outer layout table. Its thead/tfoot are empty spacers that the print
+           engine repeats on every page, reserving room for the fixed banners so
+           content never runs underneath them. The single body row is allowed to
+           split across pages (PAGE_CSS would otherwise force avoid-break on it). -->
+      <table style="width:100%; border-collapse:collapse;">
+        <thead>
+          <tr><td class="page-spacer" style="height:${TOP_SPACER_H}px; padding:0;"></td></tr>
+        </thead>
+        <tbody>
+          <tr style="break-inside:auto; page-break-inside:auto;">
+            <td style="padding:0; vertical-align:top;">
 
         <!-- Logo + business info (left) / doc meta (right) -->
         <table class="avoid-break" style="margin-bottom:28px;">
@@ -151,21 +176,23 @@ export function buildProfessionalHtml(doc: Document, business: BusinessProfile):
           ${doc.customerEmail ? `<div style="font-size:12px; color:#5f6368;">${escapeHtml(doc.customerEmail)}</div>` : ''}
         </div>` : ''}
 
-        <!-- Items table — thead repeats per page automatically (PAGE_CSS);
-             rows have no background fill so the watermark behind them
-             (this whole wrapper is z-index:1 over the fixed watermark div)
-             reads through on every page it appears on. -->
-        <table style="border-radius:6px; overflow:hidden; margin-bottom:24px;">
-          <thead>
-            <tr style="background:${brandColor};">
-              <th style="padding:8px 12px; font-size:10px; font-weight:700; color:#ffffff; text-transform:uppercase; letter-spacing:0.5px; text-align:left;">Description</th>
-              <th style="padding:8px 12px; font-size:10px; font-weight:700; color:#ffffff; text-transform:uppercase; letter-spacing:0.5px; text-align:right;">Rate</th>
-              <th style="padding:8px 12px; font-size:10px; font-weight:700; color:#ffffff; text-transform:uppercase; letter-spacing:0.5px; text-align:right;">Qty</th>
-              <th style="padding:8px 12px; font-size:10px; font-weight:700; color:#ffffff; text-transform:uppercase; letter-spacing:0.5px; text-align:right;">Amount</th>
-            </tr>
-          </thead>
-          <tbody>${itemRows}</tbody>
-        </table>
+        <!-- Items list section. The wrapper is the positioning context for the
+             watermark, so the logo is centered within this section only.
+             min-height gives the logo room even when there are few items. -->
+        <div style="position:relative; min-height:280px; margin-bottom:24px;">
+          ${watermarkHtml}
+          <table style="position:relative; z-index:1; border-radius:6px; overflow:hidden;">
+            <thead>
+              <tr style="background:${brandColor};">
+                <th style="padding:8px 12px; font-size:10px; font-weight:700; color:#ffffff; text-transform:uppercase; letter-spacing:0.5px; text-align:left;">Description</th>
+                <th style="padding:8px 12px; font-size:10px; font-weight:700; color:#ffffff; text-transform:uppercase; letter-spacing:0.5px; text-align:right;">Rate</th>
+                <th style="padding:8px 12px; font-size:10px; font-weight:700; color:#ffffff; text-transform:uppercase; letter-spacing:0.5px; text-align:right;">Qty</th>
+                <th style="padding:8px 12px; font-size:10px; font-weight:700; color:#ffffff; text-transform:uppercase; letter-spacing:0.5px; text-align:right;">Amount</th>
+              </tr>
+            </thead>
+            <tbody>${itemRows}</tbody>
+          </table>
+        </div>
 
         <!-- Notes + Totals -->
         <table class="avoid-break" style="margin-bottom:24px;">
@@ -224,14 +251,18 @@ export function buildProfessionalHtml(doc: Document, business: BusinessProfile):
         </div>
 
         <!-- Footer note -->
-        <div class="avoid-break" style="margin-bottom:22px;">
+        <div class="avoid-break" style="margin-bottom:8px;">
           <div style="font-size:13px; color:#5f6368;">Thank you for your business!</div>
           ${business.registrationNumber ? `<div style="font-size:10px; color:#5f6368; margin-top:4px;">Reg. No: ${escapeHtml(business.registrationNumber)}</div>` : ''}
         </div>
 
-      </div>
-
-      ${bannerSvg(brandColor, 16, true)}
+            </td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr><td class="page-spacer" style="height:${BOTTOM_SPACER_H}px; padding:0;"></td></tr>
+        </tfoot>
+      </table>
 
     </div>
   </body>
