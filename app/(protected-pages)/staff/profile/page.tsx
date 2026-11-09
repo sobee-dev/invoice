@@ -1,7 +1,7 @@
 // app/(staff)/staff/profile/page.tsx
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/layout/Icon";
 import { ChangePasswordModal } from "@/components/settings/ChangePasswordModal";
@@ -11,8 +11,8 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { Toast, ToastState } from "@/components/ui/Toast";
 import { btnNavy } from "@/components/ui/buttonStyles";
 import { useAuth } from "@/context/AuthContext";
+import { useStaffDashboard } from "@/hooks/useStaffDashboard";
 import { ROUTES } from "@/lib/routes";
-import { StaffMemberDetail, staffService } from "@/services/staff";
 
 function initialsFrom(name: string, email: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -31,32 +31,14 @@ export default function StaffProfilePage() {
   const router = useRouter();
   const { user, logout } = useAuth();
 
-  const [info, setInfo] = useState<StaffMemberDetail | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [failed, setFailed] = useState(false);
+  // Shares its cache with the staff dashboard, so this costs no extra request.
+  const { data, isLoading: loading, failed, reload: load } = useStaffDashboard();
+  const info = data?.staffInfo ?? null;
 
   const [pwOpen, setPwOpen] = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
   const dismissToast = useCallback(() => setToast(null), []);
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    setFailed(false);
-    try {
-      const dashboard = await staffService.getMyDashboard();
-      setInfo(dashboard.staffInfo);
-    } catch {
-      setInfo(null);
-      setFailed(true);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
 
   const email = user?.email ?? "";
   const fullName =

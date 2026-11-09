@@ -1,9 +1,10 @@
 // app/(staff)/staff/docs/[id]/page.tsx
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { DocumentSummary } from "@/components/docs/DocumentSummary";
 import { InvoicePreview } from "@/components/docs/InvoicePreview";
 import { getInvoiceHtml } from "@/components/templates/pdf";
@@ -20,6 +21,7 @@ import { btnAmber, btnNavy, btnOutline } from "@/components/ui/buttonStyles";
 import { useAuth } from "@/context/AuthContext";
 import { useBusiness } from "@/context/BusinessContext";
 import { useSubscriptionContext } from "@/context/SubscriptionContext";
+import { useDetailQuery } from "@/hooks/useDetailQuery";
 import { DocumentType, TYPE_LABEL } from "@/lib/documents";
 import { printHtml } from "@/lib/printHtml";
 import { ROUTES } from "@/lib/routes";
@@ -29,7 +31,6 @@ import { getDisplayName } from "@/utils/displayName";
 import { fmtLongDate } from "@/utils/formatDate";
 import { getApiErrorMessage } from "@/utils/getErrorMessage";
 
-type LoadState = "loading" | "ready" | "missing" | "error";
 type Payment = "paid" | "pending" | "unpaid";
 type Confirm = "paid" | "unpaid" | null;
 
@@ -56,28 +57,22 @@ export default function StaffDocumentDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const { business } = useBusiness();
+  const queryClient = useQueryClient();
   const { subscription, isLoading: planLoading } = useSubscriptionContext();
 
-  const [doc, setDoc] = useState<Document | null>(null);
-  const [state, setState] = useState<LoadState>("loading");
+  // Same key as the owner document page, so the cache is shared.
+  const docKey = ["documents", "detail", id] as const;
+  const { data: doc, state } = useDetailQuery<Document>(docKey, () => documentService.get(id));
+
   const [confirm, setConfirm] = useState<Confirm>(null);
   const [printing, setPrinting] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
   const dismissToast = useCallback(() => setToast(null), []);
 
-  const load = useCallback(async () => {
-    try {
-      setDoc(await documentService.get(id));
-      setState("ready");
-    } catch (err: any) {
-      setState(err?.response?.status === 404 ? "missing" : "error");
-    }
-  }, [id]);
-
-  useEffect(() => {
-    setState("loading");
-    load();
-  }, [load]);
+  // Writes refresh the cache by themselves. This only shows the server's reply
+  // straight away, so the page never flashes the old status.
+  const patchDoc = (changes: Document) =>
+    queryClient.setQueryData<Document>(docKey, (prev) => (prev ? { ...prev, ...changes } : changes));
 
   const html = useMemo(() => {
     if (!doc || !business || planLoading) return "";
@@ -133,7 +128,7 @@ export default function StaffDocumentDetailPage() {
   const markPaid = async () => {
     try {
       const updated = await documentService.markPaid(doc.id);
-      setDoc((prev) => (prev ? { ...prev, ...updated } : updated));
+      patchDoc(updated);
       setToast({ tone: "success", text: "Marked as paid." });
     } catch (err: any) {
       setToast({ tone: "error", text: getApiErrorMessage(err, "Could not mark this document as paid.") });
@@ -145,7 +140,7 @@ export default function StaffDocumentDetailPage() {
   const markUnpaid = async () => {
     try {
       const updated = await documentService.markUnpaid(doc.id, { deductStock: willDeduct });
-      setDoc((prev) => (prev ? { ...prev, ...updated } : updated));
+      patchDoc(updated);
       setToast({
         tone: "success",
         text:

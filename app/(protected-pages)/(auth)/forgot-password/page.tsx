@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { Mail, ArrowLeft } from 'lucide-react';
-import Loader from '@/components/Loader';
+import { useState } from "react";
+import Link from "next/link";
+import { Mail, ArrowLeft, Loader2 } from "lucide-react";
+import { authService } from "@/services/auth";
+import { getApiErrorMessage } from "@/utils/getErrorMessage";
+import { ROUTES } from "@/lib/routes";
 
 const inputCls = "h-12 w-full pl-10 pr-4 rounded-lg border border-[#dee2e6] bg-white text-[#1b1b1f] placeholder:text-[#c5c6d0] focus:border-[#1b2e5e] focus:outline-none transition-colors text-sm";
 const labelCls = "block text-xs font-semibold text-[#45464f] uppercase tracking-wider mb-1.5";
@@ -11,46 +13,34 @@ const labelCls = "block text-xs font-semibold text-[#45464f] uppercase tracking-
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
   const [error, setError] = useState("");
-
-  const validateEmail = () => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      setError("Please enter a valid email address.");
-      return false;
-    }
-    setError("");
-    return true;
-  };
 
   const handleResetRequest = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateEmail()) return;
+    if (isLoading) return;
+
+    const normalizedEmail = email.trim().toLowerCase();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(normalizedEmail)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
 
     setIsLoading(true);
+    setError("");
 
     try {
-      const response = await fetch('YOUR_DJANGO_API_URL/api/password-reset/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.detail || data.message || 'Failed to send reset email');
-      }
-
-      setIsSubmitted(true);
-    } catch (error: any) {
-      setError(error.message || "Something went wrong. Please try again later.");
+      await authService.requestPasswordReset(normalizedEmail);
+      setSubmittedEmail(normalizedEmail);
+    } catch (err: any) {
+      setError(getApiErrorMessage(err, "Something went wrong. Please try again later."));
     } finally {
       setIsLoading(false);
     }
   };
 
-  if (isSubmitted) {
+  if (submittedEmail) {
     return (
       <div className="text-center space-y-6">
         <div className="flex justify-center">
@@ -59,16 +49,28 @@ export default function ForgotPasswordPage() {
           </div>
         </div>
         <h2 className="text-2xl font-bold text-[#1b1b1f] tracking-tight">Check your email</h2>
-        <p className="text-sm text-[#45464f]">
-          We&apos;ve sent a password reset link to <br />
-          <span className="font-semibold text-[#1b1b1f]">{email}</span>
+        <p className="text-sm text-[#45464f] leading-relaxed">
+          If an account exists for <br />
+          <span className="font-semibold text-[#1b1b1f]">{submittedEmail}</span>
+          <br />
+          we have sent a password reset link. It opens a page where you can choose a new
+          6-digit passcode. If nothing arrives in a few minutes, check your spam folder.
         </p>
-        <Link
-          href="/login"
-          className="inline-flex items-center gap-2 text-sm font-semibold text-[#1b2e5e] hover:text-[#011848] transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4" /> Back to Login
-        </Link>
+        <div className="flex flex-col items-center gap-3">
+          <button
+            type="button"
+            onClick={() => { setSubmittedEmail(null); setEmail(""); }}
+            className="text-sm font-semibold text-[#45464f] hover:text-[#1b1b1f] hover:underline"
+          >
+            Use a different email
+          </button>
+          <Link
+            href={ROUTES.login}
+            className="inline-flex items-center gap-2 text-sm font-semibold text-[#1b2e5e] hover:text-[#011848] transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" /> Back to Login
+          </Link>
+        </div>
       </div>
     );
   }
@@ -84,7 +86,7 @@ export default function ForgotPasswordPage() {
 
       <form className="space-y-4" onSubmit={handleResetRequest}>
         {error && (
-          <div className="p-3 text-sm text-[#ba1a1a] bg-[#ffdad6] rounded-lg border border-[#f9b4ae]">
+          <div role="alert" className="p-3 text-sm text-[#ba1a1a] bg-[#ffdad6] rounded-lg border border-[#f9b4ae]">
             {error}
           </div>
         )}
@@ -96,8 +98,12 @@ export default function ForgotPasswordPage() {
             <input
               type="email"
               required
+              autoComplete="email"
+              autoCapitalize="none"
+              autoCorrect="off"
+              disabled={isLoading}
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => { setEmail(e.target.value); setError(""); }}
               className={inputCls}
               placeholder="you@example.com"
             />
@@ -106,16 +112,16 @@ export default function ForgotPasswordPage() {
 
         <button
           type="submit"
-          disabled={isLoading}
-          className="w-full h-12 bg-[#1b2e5e] hover:bg-[#011848] text-white rounded-lg font-semibold text-sm transition-colors shadow-[0px_2px_4px_rgba(27,46,94,0.15)] flex items-center justify-center gap-2 disabled:opacity-50"
+          disabled={isLoading || email.trim().length === 0}
+          className="w-full h-12 bg-[#1b2e5e] hover:bg-[#011848] text-white rounded-lg font-semibold text-sm transition-colors shadow-[0px_2px_4px_rgba(27,46,94,0.15)] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isLoading ? <Loader /> : "Reset Password"}
+          {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Reset Password"}
         </button>
       </form>
 
       <div className="text-center">
         <Link
-          href="/login"
+          href={ROUTES.login}
           className="inline-flex items-center gap-2 text-sm font-semibold text-[#1b2e5e] hover:text-[#011848] transition-colors"
         >
           <ArrowLeft className="h-4 w-4" /> Back to Login

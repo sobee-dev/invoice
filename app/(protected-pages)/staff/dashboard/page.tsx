@@ -1,8 +1,8 @@
 // app/(staff)/staff/dashboard/page.tsx
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
 import { AdBanner } from "@/components/ads/AdBanner";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { DocumentsTable } from "@/components/docs/DocumentsTable";
@@ -11,9 +11,9 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { SectionCard } from "@/components/ui/SectionCard";
 import { useAuth } from "@/context/AuthContext";
 import { useBusiness } from "@/context/BusinessContext";
-import { DocumentRowData, fetchDocumentPage } from "@/lib/documents";
+import { useStaffDashboard } from "@/hooks/useStaffDashboard";
+import { fetchDocumentPage } from "@/lib/documents";
 import { ROUTES, staffDocRoute } from "@/lib/routes";
-import { StaffDashboardData, staffService } from "@/services/staff";
 import { resolveCurrency } from "@/utils/currencySymbol";
 import { fmtMoney } from "@/utils/money";
 
@@ -21,47 +21,19 @@ export default function StaffDashboardPage() {
   const { user } = useAuth();
   const { business } = useBusiness();
 
-  const [stats, setStats] = useState<StaffDashboardData | null>(null);
-  const [rows, setRows] = useState<DocumentRowData[]>([]);
-  const [rowsLoading, setRowsLoading] = useState(true);
-  const [rowsFailed, setRowsFailed] = useState(false);
+  const { data: stats } = useStaffDashboard();
+
+  // The backend already limits staff to the documents they created.
+  const recent = useQuery({
+    queryKey: ["documents", "staff-recent"],
+    queryFn: async () => (await fetchDocumentPage({ page: 1 })).rows.slice(0, 4),
+  });
+  const rows = recent.data ?? [];
+  const rowsLoading = recent.isPending;
+  const rowsFailed = recent.isError && !recent.data;
 
   const symbol = business?.currency ? resolveCurrency(business.currency).symbol : "";
   const displayName = user?.firstName || user?.email?.split("@")[0] || "there";
-
-  useEffect(() => {
-    let cancelled = false;
-    staffService
-      .getMyDashboard()
-      .then((data) => {
-        if (!cancelled) setStats(data);
-      })
-      .catch(() => {
-        if (!cancelled) setStats(null);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  // The backend already limits staff to the documents they created.
-  const loadRecent = useCallback(async () => {
-    setRowsLoading(true);
-    setRowsFailed(false);
-    try {
-      const page = await fetchDocumentPage({ page: 1 });
-      setRows(page.rows.slice(0, 4));
-    } catch {
-      setRows([]);
-      setRowsFailed(true);
-    } finally {
-      setRowsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadRecent();
-  }, [loadRecent]);
 
   const dash = "...";
 
@@ -116,7 +88,9 @@ export default function StaffDashboardPage() {
             action={
               <button
                 type="button"
-                onClick={loadRecent}
+                onClick={() => {
+                  recent.refetch();
+                }}
                 className="h-10 rounded-lg bg-primary-container px-5 text-sm font-semibold text-white hover:bg-primary"
               >
                 Try again
