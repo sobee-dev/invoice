@@ -8,8 +8,8 @@ export type PublicTier = "business" | "enterprise";
 export type PublicInterval = "monthly" | "biannually" | "annually";
 
 export const MONTHLY_PRICE_NGN: Record<PublicTier, number> = {
-  business: 9000,
-  enterprise: 29000,
+  business: 7500,
+  enterprise: 20000,
 };
 
 export const INTERVALS: { key: PublicInterval; label: string; months: number; discount: number }[] = [

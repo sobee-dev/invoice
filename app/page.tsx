@@ -4,10 +4,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import {
-  ArrowRight, ArrowUp, BarChart3, Bell, Boxes, CheckCircle, FileText, Globe, LayoutDashboard, Lock, Menu, Play,
+  ArrowRight, ArrowUp, Boxes, CheckCircle,LayoutDashboard, Menu, Play, Package, BellRing, Users, Wallet, ClipboardList, FileText,
   Receipt,
-  Settings,
-  Sparkles, Star, TriangleAlert, Users, X, Zap,
+  Settings, Star, TriangleAlert,X, Zap,
 } from "lucide-react";
 
 import { TRIAL_DAYS } from "@/lib/plan";
@@ -24,32 +23,32 @@ const NAV_LINKS = [
 ];
 
 const STATS = [
-  ["$420M+", "Invoices Processed", "Safely delivered worldwide"],
-  ["14,500+", "Active Freelancers & Teams", "Trust Billbuzz daily"],
+  ["100+", "Invoices Processed", "Smart business owners trust us"],
+  ["500+", "Active Freelancers & Teams", "Trust Billbuzz daily"],
   ["< 24 Hrs", "Average Payment Time", "Up from 14 business days"],
-  ["135+", "Global Currencies", "Multi-currency support"],
+  ["35+", "Global Currencies", "Multi-currency support"],
 ];
 
 const FEATURES = [
-  [Zap, "Smart Recurring Billing", "Set up subscription models or milestone payments once and let Billbuzz handle automated invoicing on autopilot."],
-  [Bell, "Intelligent Reminders", "Polite, automated multi-channel nudges via email and SMS that prompt clients right when invoices are due."],
-  [Globe, "Global Multi-Currency", "Accept payments in USD, EUR, GBP, JPY, and crypto instantly with automated real-time exchange rate calculation."],
-  [BarChart3, "Real-time Cash Flow Analytics", "Gain deep insights into your monthly recurring revenue (MRR), outstanding receivables, and payout forecasts."],
-  [Lock, "Enterprise-grade Security", "Bank-level 256-bit encryption and strict PCI-DSS compliance ensure your financial data is always locked down."],
-  [Users, "Client Portal & History", "Give your clients a branded portal where they can view past invoices, download receipts, and update payment methods."],
+  [Package, "Stock that follows every sale", "Every invoice takes its items off your shelf automatically, so the number on your screen is the number that should be in your shop."],
+  [BellRing, "Warnings before you run out", "Set a reorder level for each product and get notified when an item runs low or runs out, before a customer finds the shelf empty."],
+  [Users, "One place to watch your team", "Add staff with their own sign in, choose what each person can access, and see every document they create without standing over their shoulder."],
+  [Wallet, "Know who still owes you", "See every unpaid invoice, every part payment and the balance each customer still has to clear, all in one view."],
+  [ClipboardList, "A trail for every stock change", "Each adjustment is logged with a reason, so when your goods and your book disagree you can see exactly when and why the numbers moved."],
+  [FileText, "Invoices, proformas and supplier orders", "Create clean documents with your own logo and print them or save them as PDF in a few taps."],
 ] as const;
 
 const STEPS = [
-  ["01", "Connect Your Account & Add Clients", "Link your business bank account in 60 seconds and import your client list seamlessly from CSV or CRM tools."],
-  ["02", "Create Branded Invoices or Subscriptions", "Use our drag-and-drop builder to generate stunning invoices with custom line items and instant payment links."],
-  ["03", "Sit Back & Get Paid Automatically", "Billbuzz handles the sending, tracking, and reminder follow-ups until funds land directly in your account."],
-];
+  ["01", "Set up your business and add your products", "Create your account, add your logo and business details, then list what you sell with its price, how many you have and the level at which you want to be warned."],
+  ["02", "Invoice every sale", "Create an invoice for each sale and BillBuzz takes the items off your stock, then keeps track of who has paid and who still owes you."],
+  ["03", "Watch your business from anywhere", "Add your staff with their own sign in, then check your stock, your sales and your unpaid balances in one place, and get a warning when something runs low."],
+] as const;
 
 const REVIEWS = [
-  ["Billbuzz cut our accounts receivable cycle from 18 days down to under 2 days. The automated SMS reminders are a total game changer.", "Sarah Jenkins", "Founder at PixelCraft Studio", "SJ"],
-  ["Managing international clients used to be a currency conversion nightmare. With Billbuzz, multi-currency invoicing is completely effortless.", "Marcus Vance", "Lead Consultant, Vance Tech", "MV"],
-  ["The clean UI and instant webhook payouts make Billbuzz the absolute best invoicing platform for modern digital agencies.", "Elena Rostova", "Operations Director, CodeHarbor", "ER"],
-];
+  ["I used to guess what was left on my shelves. Now BillBuzz warns me before anything runs out.", "Chidinma O.", "Shop owner", "CO"],
+  ["I cannot be in the shop every day. Now I check what my staff sold from my phone, and it matches my book.", "Tunde", "Provision store owner", "TA"],
+  ["I always forgot who still owed me. Now I open BillBuzz and see every unpaid invoice and balance.", "Amina AA", "Freelancer", "AA"],
+] as const;
 
 // Prices come from lib/planPricing.ts. The limits below mirror PLAN_LIMITS in billing/plans.py.
 const PLANS: {
@@ -93,19 +92,19 @@ const FOOTER_COLS: [string, string[][]][] = [
 function SectionHead({ tag, title, sub }: { tag: string; title: string; sub: string }) {
   return (
     <div className="text-center max-w-3xl mx-auto mb-16">
-      <span className="text-indigo-400 font-semibold text-xs tracking-wider uppercase bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20">{tag}</span>
+      <span className="text-blue-400 font-semibold text-xs tracking-wider uppercase bg-blue-500/10 px-3 py-1 rounded-full border border-blue-500/20">{tag}</span>
       <h2 className="text-3xl sm:text-4xl font-black text-white mt-4 tracking-tight">{title}</h2>
       <p className="text-slate-400 mt-3 text-base">{sub}</p>
     </div>
   );
 }
 
-function Logo({ size = 40, text = "text-2xl" }: { size?: number; text?: string }) {
+function Logo({ size = 50, text = "text-2xl" }: { size?: number; text?: string }) {
   return (
     <Link href="/" className="flex items-center gap-3">
-      <Image src="/logo.png" alt="Billbuzz logo" width={size} height={size} className="rounded-xl shadow-lg shadow-indigo-500/30" priority />
+      <Image src="/logo.png" alt="Billbuzz logo" width={size} height={size} className="rounded-xl " priority />
       <span className={`${text} font-extrabold text-white tracking-tight`}>
-        Bill<span className="text-indigo-400">buzz</span>
+        Bill<span className="text-blue-400">buzz</span>
       </span>
     </Link>
   );
@@ -129,13 +128,13 @@ function Navbar() {
           <Logo />
 
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-300">
-            {NAV_LINKS.map(([l, h]) => <a key={l} href={h} className="hover:text-indigo-400 transition">{l}</a>)}
+            {NAV_LINKS.map(([l, h]) => <a key={l} href={h} className="hover:text-blue-400 transition">{l}</a>)}
           </div>
 
           <div className="hidden md:flex items-center gap-4">
             <Link href={ROUTES.login} className="text-sm font-semibold text-slate-300 hover:text-white px-4 py-2 transition">Sign In</Link>
             <Link href={ROUTES.register} className="relative group overflow-hidden rounded-xl p-[1px] font-semibold text-sm">
-              <span className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-violet-600 transition-all duration-300 group-hover:scale-105" />
+              <span className="absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-600 transition-all duration-300 group-hover:scale-105" />
               <span className="relative px-5 py-2.5 rounded-[11px] bg-slate-950 text-white flex items-center gap-2 group-hover:bg-opacity-0 transition">
                 Get Started Free
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -154,10 +153,10 @@ function Navbar() {
       {isOpen && (
         <div className="md:hidden absolute top-full left-0 right-0 bg-slate-900 border-b border-slate-800 py-6 px-6 shadow-2xl animate-in slide-in-from-top duration-200">
           <div className="flex flex-col gap-4 text-base font-medium text-slate-300">
-            {NAV_LINKS.map(([l, h]) => <a key={l} href={h} onClick={() => setIsOpen(false)} className="hover:text-indigo-400 py-1">{l}</a>)}
+            {NAV_LINKS.map(([l, h]) => <a key={l} href={h} onClick={() => setIsOpen(false)} className="hover:text-blue-400 py-1">{l}</a>)}
             <div className="pt-4 border-t border-slate-800 flex flex-col gap-3">
               <Link href={ROUTES.login} className="w-full py-3 rounded-xl bg-slate-800 text-white font-semibold text-center">Sign In</Link>
-              <Link href={ROUTES.register} className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white font-semibold text-center shadow-lg shadow-indigo-500/25">
+              <Link href={ROUTES.register} className="w-full py-3 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-600 text-white font-semibold text-center shadow-lg shadow-blue-500/25">
                 Get Started Free
               </Link>
             </div>
@@ -171,33 +170,33 @@ function Navbar() {
 // ─── Hero ────────────────────────────────────────────────────────────────────
 function Hero() {
   return (
-    <div className="relative pt-32 pb-20 md:pt-40 md:pb-32 overflow-hidden bg-slate-950">
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-600/15 rounded-full blur-[140px] pointer-events-none" />
-      <div className="absolute top-1/3 right-10 w-[400px] h-[400px] bg-violet-600/10 rounded-full blur-[120px] pointer-events-none" />
+    <div className="relative pt-32 pb-20 md:pt-40 md:pb-32 overflow-hidden dark:bg-slate-950">
+      {/* <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-600/15 rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute top-1/3 right-10 w-[400px] h-[400px] bg-cyan-600/10 rounded-full blur-[120px] pointer-events-none" /> */}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold tracking-wide">
-              <Sparkles className="w-3.5 h-3.5" />
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold tracking-wide">
+              
               <span>Next-Gen Automated Billing & Invoicing</span>
             </div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.1]">
-              Get Paid <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-violet-400 to-purple-400">3x Faster</span> Without The Chasing.
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black dark:text-white tracking-tight leading-[1.1]">
+              Are You <span className=" text-blue-600">100% Sure</span> All your Sales and inventory are accounted for?.
             </h1>
 
             <p className="text-lg text-slate-400 max-w-2xl mx-auto lg:mx-0 font-normal leading-relaxed">
-              Billbuzz automates recurring invoices, smart client reminders, and instant multi-channel payments so your cash flow never skips a beat. Designed for modern agencies & freelancers.
+              BillBuzz stays ahead of your business, records every sales and credits, takes the stock off your shelf and warehouse as it happens, and tells you before an item runs out, so your goods and your book always agree, even on the days you are not in the shop.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
-              <Link href={ROUTES.register} className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white font-bold text-sm shadow-xl shadow-indigo-500/25 flex items-center justify-center gap-3 hover:scale-105 transition-all">
+              <Link href={ROUTES.register} className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold text-sm shadow-xl shadow-blue-500/25 flex items-center justify-center gap-3 hover:scale-105 transition-all">
                 <span>Start {TRIAL_DAYS}-Day Free Trial</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
               <a href="#showcase" className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-slate-900 border border-slate-800 text-slate-200 font-bold text-sm hover:bg-slate-800 transition-all flex items-center justify-center gap-2">
-                <Play className="w-4 h-4 text-indigo-400 fill-indigo-400" />
+                <Play className="w-4 h-4 text-red-600 fill-red-600" />
                 <span>Watch Product Demo</span>
               </a>
             </div>
@@ -225,16 +224,16 @@ function Hero() {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="bg-slate-950/80 rounded-2xl p-3 border border-slate-800">
                     <span className="text-[10px] text-slate-400 block mb-1">Active Invoices</span>
-                    <span className="text-lg font-bold text-indigo-400">142</span>
+                    <span className="text-lg font-bold text-blue-600">142</span>
                   </div>
                   <div className="bg-slate-950/80 rounded-2xl p-3 border border-slate-800">
                     <span className="text-[10px] text-slate-400 block mb-1">Pending</span>
                     <span className="text-lg font-bold text-amber-400">$12,450</span>
                   </div>
                 </div>
-                <div className="bg-gradient-to-r from-indigo-600/20 to-violet-600/20 border border-indigo-500/30 rounded-2xl p-3.5 flex items-center justify-between">
+                <div className="bg-gradient-to-r from-blue-600/20 to-cyan-600/20 border border-blue-500/30 rounded-2xl p-3.5 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-400"><Zap className="w-4 h-4" /></div>
+                    <div className="w-8 h-8 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-400"><Zap className="w-4 h-4" /></div>
                     <div>
                       <h4 className="text-xs font-bold text-white">Auto-Reminder Sent</h4>
                       <p className="text-[10px] text-slate-400">Client Acme Corp paid $1,200</p>
@@ -245,18 +244,12 @@ function Hero() {
               </div>
 
               <div className="bg-slate-950/90 py-2.5 px-4 rounded-2xl flex justify-between items-center text-slate-400">
-                <div className="w-6 h-6 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-xs">🏠</div>
-                {["📊", "💳", "⚙️"].map((e) => <div key={e} className="w-6 h-6 flex items-center justify-center text-xs">{e}</div>)}
+                <div className="w-6 h-6 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs">🏠</div>
+               
               </div>
             </div>
 
-            <div className="absolute -bottom-6 -left-6 bg-slate-900/90 backdrop-blur-md border border-slate-800 p-4 rounded-2xl shadow-2xl items-center gap-3 hidden sm:flex">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">99%</div>
-              <div>
-                <p className="text-xs text-slate-400 font-medium">On-time Payment Rate</p>
-                <p className="text-sm font-bold text-white">Across 12,000+ creators</p>
-              </div>
-            </div>
+           
           </div>
         </div>
       </div>
@@ -270,8 +263,8 @@ function Stats() {
     <div className="bg-slate-950 border-y border-slate-900 py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
         {STATS.map(([v, l, d]) => (
-          <div key={l} className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-6 text-center hover:border-indigo-500/50 transition">
-            <div className="text-3xl sm:text-4xl font-black mb-1 bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-violet-400">{v}</div>
+          <div key={l} className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-6 text-center hover:border-blue-500/50 transition">
+            <div className="text-3xl sm:text-4xl font-black mb-1 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-600">{v}</div>
             <div className="text-sm font-semibold text-slate-300 mb-1">{l}</div>
             <div className="text-xs text-slate-500">{d}</div>
           </div>
@@ -288,8 +281,8 @@ function Features() {
         <SectionHead tag="Powerful Features" title="Everything You Need to Master Your Invoicing" sub="Replace legacy spreadsheets and clunky software with a streamlined engine built for modern speed." />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {FEATURES.map(([Icon, t, d]) => (
-            <div key={t} className="bg-slate-900/60 border border-slate-800 rounded-3xl p-8 hover:border-indigo-500/50 hover:bg-slate-900 transition-all duration-300 group">
-              <div className="w-12 h-12 rounded-2xl bg-indigo-600/10 text-indigo-400 flex items-center justify-center mb-6 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300 shadow-md">
+            <div key={t} className="bg-slate-900/60 border border-slate-800 rounded-3xl p-8 hover:border-blue-500/50 hover:bg-slate-900 transition-all duration-300 group">
+              <div className="w-12 h-12 rounded-2xl bg-blue-600/10 text-blue-400 flex items-center justify-center mb-6 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300 shadow-md">
                 <Icon className="w-6 h-6" />
               </div>
               <h3 className="text-xl font-bold text-white mb-2">{t}</h3>
@@ -306,16 +299,16 @@ function HowItWorks() {
   return (
     <section id="how-it-works" className="py-24 bg-slate-900/50 border-t border-slate-900 relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <SectionHead tag="Simple Workflow" title="How Billbuzz Works in 3 Easy Steps" sub="From zero to fully automated cash flow in less than the time it takes to drink your morning coffee." />
+        <SectionHead tag="Simple Workflow" title="How Billbuzz Works in 3 Easy Steps" sub="From zero to fully automated flow in less than the time it takes to drink your morning coffee." />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {STEPS.map(([n, t, d]) => (
             <div key={n} className="bg-slate-950 border border-slate-800 rounded-3xl p-8 relative flex flex-col justify-between">
               <div>
-                <span className="text-4xl font-black text-indigo-500/30 block mb-4">{n}</span>
+                <span className="text-4xl font-black text-blue-500/30 block mb-4">{n}</span>
                 <h3 className="text-xl font-bold text-white mb-3">{t}</h3>
                 <p className="text-sm text-slate-400 leading-relaxed">{d}</p>
               </div>
-              <div className="pt-8 mt-8 border-t border-slate-900 flex items-center gap-2 text-xs font-semibold text-indigo-400">
+              <div className="pt-8 mt-8 border-t border-slate-900 flex items-center gap-2 text-xs font-semibold text-blue-400">
                 <span>Learn more about step {n}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </div>
@@ -330,18 +323,18 @@ function HowItWorks() {
 function ProductShowcase() {
   const [tab, setTab] = useState<"invoices" | "analytics">("invoices");
   const tabBtn = (k: "invoices" | "analytics", label: string) => (
-    <button onClick={() => setTab(k)} className={`px-6 py-2.5 rounded-xl text-sm font-semibold transition-all ${tab === k ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30" : "bg-slate-900 text-slate-400 hover:text-white border border-slate-800"}`}>{label}</button>
+    <button onClick={() => setTab(k)} className={`px-6 py-2.5 rounded-xl text-sm font-semibold transition-all ${tab === k ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30" : "bg-slate-900 text-slate-400 hover:text-white border border-slate-800"}`}>{label}</button>
   );
   const invoices = [
-    ["bg-indigo-500/20 text-indigo-400", "BB-2026-084", "Stripe Inc • Due in 3 days", "$4,850.00", "Pending", "bg-amber-500/20 text-amber-400"],
-    ["bg-emerald-500/20 text-emerald-400", "BB-2026-083", "Vercel Labs • Paid via Apple Pay", "$1,200.00", "Paid", "bg-emerald-500/20 text-emerald-400"],
+    ["bg-blue-500/20 text-blue-400", "BB-2026-084", "Stripe Inc • Due in 3 days", "$4,850.00", "Pending", "bg-amber-500/20 text-amber-400"],
+    ["bg-emerald-500/20 text-emerald-400", "BB-2026-083", "Vercel Labs • Paid cash", "$1,200.00", "Paid", "bg-emerald-500/20 text-emerald-400"],
   ];
 
   return (
     <section id="showcase" className="py-24 bg-slate-950 relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <span className="text-indigo-400 font-semibold text-xs tracking-wider uppercase bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20">Product Showcase</span>
+          <span className="text-blue-400 font-semibold text-xs tracking-wider uppercase bg-blue-500/10 px-3 py-1 rounded-full border border-blue-500/20">Product Showcase</span>
           <h2 className="text-3xl sm:text-4xl font-black text-white mt-4 tracking-tight">Designed for Absolute Clarity</h2>
           <p className="text-slate-400 mt-3 text-base">Take a peak inside our layered dashboards engineered for high-performance financial management.</p>
           <div className="flex justify-center gap-3 mt-8">{tabBtn("invoices", "Invoicing Hub")}{tabBtn("analytics", "Analytics Suite")}</div>
@@ -381,7 +374,7 @@ function ProductShowcase() {
                 <div className="h-40 flex items-end gap-3 pt-6">
                   {[40, 65, 45, 80, 70, 95, 100].map((h, i) => (
                     <div key={i} className="flex-1 bg-slate-900 rounded-t-lg relative group h-full flex items-end">
-                      <div style={{ height: `${h}%` }} className="w-full bg-gradient-to-t from-indigo-600 to-violet-500 rounded-t-lg transition-all duration-500 group-hover:bg-indigo-400" />
+                      <div style={{ height: `${h}%` }} className="w-full bg-gradient-to-t from-blue-600 to-cyan-500 rounded-t-lg transition-all duration-500 group-hover:bg-blue-400" />
                     </div>
                   ))}
                 </div>
@@ -398,7 +391,7 @@ function Testimonials() {
   return (
     <section id="testimonials" className="py-24 bg-slate-900/50 border-t border-slate-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <SectionHead tag="Customer Success" title="Loved by 14,500+ Founders & Freelancers" sub="See how Billbuzz transforms cash flow for businesses across the globe." />
+        <SectionHead tag="Customer Success" title="Loved by Founders & Freelancers" sub="See how Billbuzz transforms inventory flow for businesses" />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {REVIEWS.map(([q, a, r, av]) => (
             <div key={a} className="bg-slate-950 border border-slate-800 rounded-3xl p-8 flex flex-col justify-between">
@@ -409,7 +402,7 @@ function Testimonials() {
                 <p className="text-slate-300 text-sm leading-relaxed mb-6">&ldquo;{q}&rdquo;</p>
               </div>
               <div className="flex items-center gap-3 pt-6 border-t border-slate-900">
-                <div className="w-10 h-10 rounded-full bg-indigo-600 text-white font-bold text-sm flex items-center justify-center">{av}</div>
+                <div className="w-10 h-10 rounded-full bg-blue-600 text-white font-bold text-sm flex items-center justify-center">{av}</div>
                 <div><h4 className="text-sm font-bold text-white">{a}</h4><p className="text-xs text-slate-500">{r}</p></div>
               </div>
             </div>
@@ -427,7 +420,7 @@ function Pricing() {
     <section id="pricing" className="py-24 bg-slate-950 relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <span className="text-indigo-400 font-semibold text-xs tracking-wider uppercase bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20">Transparent Pricing</span>
+          <span className="text-blue-400 font-semibold text-xs tracking-wider uppercase bg-blue-500/10 px-3 py-1 rounded-full border border-blue-500/20">Transparent Pricing</span>
           <h2 className="text-3xl sm:text-4xl font-black text-white mt-4 tracking-tight">Simple Plans That Scale With You</h2>
           <p className="text-slate-400 mt-3 text-base">No hidden fees or surprise transaction cuts. Every account starts with a {TRIAL_DAYS}-day free trial of Business.</p>
 
@@ -439,12 +432,12 @@ function Pricing() {
                 aria-pressed={interval === i.key}
                 onClick={() => setInterval(i.key)}
                 className={`flex items-center gap-2 px-4 sm:px-5 py-2 rounded-xl text-sm font-semibold transition ${
-                  interval === i.key ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30" : "text-slate-400 hover:text-white"
+                  interval === i.key ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30" : "text-slate-400 hover:text-white"
                 }`}
               >
                 {i.label}
                 {i.discount > 0 && (
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${interval === i.key ? "bg-white/20 text-white" : "bg-indigo-500/20 text-indigo-400"}`}>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${interval === i.key ? "bg-white/20 text-white" : "bg-blue-500/20 text-blue-400"}`}>
                     Save {i.discount}%
                   </span>
                 )}
@@ -457,9 +450,9 @@ function Pricing() {
           {PLANS.map((p) => {
             const price = priceFor(p.tier, interval);
             return (
-              <div key={p.name} className={`rounded-3xl p-8 flex flex-col justify-between ${p.featured ? "bg-slate-900 border-2 border-indigo-500 relative shadow-2xl shadow-indigo-600/20" : "bg-slate-900/60 border border-slate-800"}`}>
+              <div key={p.name} className={`rounded-3xl p-8 flex flex-col justify-between ${p.featured ? "bg-slate-900 border-2 border-blue-500 relative shadow-2xl shadow-blue-600/20" : "bg-slate-900/60 border border-slate-800"}`}>
                 {p.featured && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-indigo-500 to-violet-600 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">Most Popular</div>
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-blue-500 to-cyan-600 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">Most Popular</div>
                 )}
                 <div>
                   <h3 className="text-lg font-bold text-white mb-2">{p.name}</h3>
@@ -470,10 +463,10 @@ function Pricing() {
                     {price.saving > 0 ? `, you save ${fmtNgn(price.saving)}` : ""}
                   </p>
                   <ul className="space-y-3 text-sm text-slate-300 mb-8">
-                    {p.items.map((i) => <li key={i} className="flex items-center gap-2"><CheckCircle className="w-4 h-4 shrink-0 text-indigo-400" /> {i}</li>)}
+                    {p.items.map((i) => <li key={i} className="flex items-center gap-2"><CheckCircle className="w-4 h-4 shrink-0 text-blue-400" /> {i}</li>)}
                   </ul>
                 </div>
-                <Link href={ROUTES.register} className={`w-full py-3 rounded-xl text-white font-semibold text-sm text-center transition ${p.featured ? "bg-gradient-to-r from-indigo-500 to-violet-600 hover:opacity-90 shadow-lg shadow-indigo-500/25" : "bg-slate-800 hover:bg-slate-700"}`}>
+                <Link href={ROUTES.register} className={`w-full py-3 rounded-xl text-white font-semibold text-sm text-center transition ${p.featured ? "bg-gradient-to-r from-blue-500 to-cyan-600 hover:opacity-90 shadow-lg shadow-blue-500/25" : "bg-slate-800 hover:bg-slate-700"}`}>
                   {p.cta}
                 </Link>
               </div>
@@ -484,7 +477,7 @@ function Pricing() {
         <p className="text-center text-xs text-slate-500 mt-10 max-w-2xl mx-auto leading-relaxed">
           When the trial ends without a plan, your account moves to Free, with 5 invoices a month, 10 products and the Classic template.
           Need help choosing?{" "}
-          <a href="mailto:billbuzzltd@gmail.com" className="text-indigo-400 hover:text-indigo-300 underline">Email us</a>.
+          <a href="mailto:billbuzzltd@gmail.com" className="text-blue-400 hover:text-blue-300 underline">Email us</a>.
         </p>
       </div>
     </section>
@@ -495,12 +488,12 @@ function CTA() {
   return (
     <section className="py-20 bg-slate-950 relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="bg-gradient-to-r from-indigo-900/40 via-violet-900/40 to-slate-900 border border-indigo-500/30 rounded-[32px] p-8 sm:p-16 text-center shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="bg-gradient-to-r from-blue-900/40 via-cyan-900/40 to-slate-900 border border-blue-500/30 rounded-[32px] p-8 sm:p-16 text-center shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
           <h2 className="text-3xl sm:text-4xl font-black text-white mb-4 tracking-tight">Ready to Automate Your Business?</h2>
-          <p className="text-slate-300 text-base max-w-2xl mx-auto mb-8 font-normal">Join thousands of successful freelancers and agencies who get paid faster with Billbuzz. Start your {TRIAL_DAYS}-day free trial today.</p>
+          <p className="text-slate-300 text-base max-w-2xl mx-auto mb-8 font-normal">Join Scores of successful freelancers and business owner who stay ahead of their business with Billbuzz. Start your {TRIAL_DAYS}-day free trial today.</p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href={ROUTES.register} className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white font-bold text-sm shadow-xl shadow-indigo-500/30 hover:scale-105 transition">
+            <Link href={ROUTES.register} className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-blue-500 to-cyan-600 text-white font-bold text-sm shadow-xl shadow-blue-500/30 hover:scale-105 transition">
               Start Free Trial Now
             </Link>
             <a href="#features" className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-slate-900 border border-slate-700 text-slate-200 font-bold text-sm hover:bg-slate-800 transition">Explore All Features</a>
@@ -519,9 +512,9 @@ function Footer() {
           <div className="md:col-span-2 space-y-4">
             <Logo size={32} text="text-xl" />
             <p className="text-xs text-slate-500 max-w-sm leading-relaxed">
-              The next-gen automated invoicing and billing platform designed for high-performing modern freelancers, startups, and creative agencies worldwide.
+              The next-gen automated invoicing, billing and inventory platform designed for high-performing modern freelancers, businesses, and creative agencies.
             </p>
-            <div className="text-xs text-slate-600">© {new Date().getFullYear()} Billbuzz Technologies Inc. All rights reserved.</div>
+            <div className="text-xs text-slate-600">© {new Date().getFullYear()} Billbuzz Technologies LTD. All rights reserved.</div>
           </div>
           {FOOTER_COLS.map(([h, ls]) => (
             <div key={h} className="space-y-3">
@@ -586,7 +579,7 @@ function DashboardPreview() {
                 <div
                   key={label}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold ${
-                    i === 0 ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30" : "text-slate-400 hover:bg-slate-900 hover:text-white transition"
+                    i === 0 ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30" : "text-slate-400 hover:bg-slate-900 hover:text-white transition"
                   }`}
                 >
                   <Icon className="w-4 h-4" /> {label}
@@ -610,7 +603,7 @@ function DashboardPreview() {
                 </div>
                 <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800">
                   <p className="text-xs font-semibold text-slate-400">Active Inventory</p>
-                  <p className="text-xl font-extrabold text-indigo-400 mt-1">142 Items</p>
+                  <p className="text-xl font-extrabold text-blue-400 mt-1">142 Items</p>
                   <span className="text-[10px] font-bold text-rose-400 mt-1 inline-flex items-center gap-1">
                     <TriangleAlert className="w-3 h-3" /> 2 items low stock
                   </span>
@@ -620,7 +613,7 @@ function DashboardPreview() {
               <div className="bg-slate-950 rounded-2xl border border-slate-800 p-5">
                 <div className="flex justify-between items-center mb-4">
                   <h4 className="font-bold text-sm text-white">Recent Invoices &amp; Sales</h4>
-                  <span className="text-xs text-indigo-400 font-bold cursor-pointer hover:text-indigo-300">Export CSV</span>
+                  <span className="text-xs text-blue-400 font-bold cursor-pointer hover:text-blue-300">Export CSV</span>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
@@ -639,7 +632,7 @@ function DashboardPreview() {
                           <td className="py-3 pr-4 text-slate-400 whitespace-nowrap">{cust}</td>
                           <td className="py-3 pr-4 font-extrabold text-white whitespace-nowrap">{amt}</td>
                           <td className="py-3 pr-4"><span className={`px-2 py-0.5 rounded-full font-bold text-[10px] ${stc}`}>{st}</span></td>
-                          <td className="py-3 text-right text-indigo-400 font-semibold">{act}</td>
+                          <td className="py-3 text-right text-blue-400 font-semibold">{act}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -657,7 +650,7 @@ function DashboardPreview() {
 // ─── Page ────────────────────────────────────────────────────────────────────
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-indigo-500 selection:text-white">
+    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-blue-500 selection:text-white">
       <Navbar />
       <Hero />
       <Stats />
