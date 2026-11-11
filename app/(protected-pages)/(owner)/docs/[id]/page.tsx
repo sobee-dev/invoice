@@ -9,7 +9,7 @@ import { AddToInventoryModal } from "@/components/docs/AddToInventoryModal";
 import { DocumentSummary } from "@/components/docs/DocumentSummary";
 import { InvoicePreview } from "@/components/docs/InvoicePreview";
 import { getInvoiceHtml } from "@/components/templates/pdf";
-import { Icon } from "@/components/layout/Icon";
+
 import { StockBadge } from "@/components/payments/StockBadge";
 import { Badge, BadgeTone } from "@/components/ui/Badge";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -18,7 +18,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { SectionCard } from "@/components/ui/SectionCard";
 import { StatusChip } from "@/components/ui/StatusChip";
 import { Toast, ToastState } from "@/components/ui/Toast";
-import { btnAmber, btnNavy, btnOutline } from "@/components/ui/buttonStyles";
+import { btnNavy,  } from "@/components/ui/buttonStyles";
 import { useAuth } from "@/context/AuthContext";
 import { useBusiness } from "@/context/BusinessContext";
 import { useSubscriptionContext } from "@/context/SubscriptionContext";
@@ -32,6 +32,10 @@ import { resolveCurrency } from "@/utils/currencySymbol";
 import { getDisplayName } from "@/utils/displayName";
 import { fmtLongDate } from "@/utils/formatDate";
 import { getApiErrorMessage } from "@/utils/getErrorMessage";
+
+import { ShareKind, useInvoiceShare } from "@/hooks/useInvoiceShare";
+import { invoiceFileBase } from "@/lib/invoiceFileName";
+import { DocumentActionsBar, DocumentActionsCard, DocumentActionsProps, StatusAction } from "@/components/docs/DocumentActions";
 
 type Payment = "paid" | "pending" | "unpaid";
 type Confirm = "paid" | "delivered" | "unpaid" | null;
@@ -82,6 +86,12 @@ export default function DocumentDetailPage() {
     return getInvoiceHtml(business.selectedTemplateId, doc.documentType, doc, business, subscription);
   }, [doc, business, subscription, planLoading]);
 
+  const fileBase = useMemo(
+    () => (doc ? invoiceFileBase(doc, business?.name) : undefined),
+    [doc, business?.name],
+  );
+  const share = useInvoiceShare(html, fileBase);
+
   if (state === "loading") {
     return <div className="h-96 animate-pulse rounded-xl border border-outline-variant bg-surface-container-low" />;
   }
@@ -125,12 +135,79 @@ export default function DocumentDetailPage() {
     if (!html || printing) return;
     setPrinting(true);
     try {
-      await printHtml(html, doc.documentNumber);
+      await printHtml(html, fileBase ?? doc.documentNumber);
     } catch (err: any) {
       setToast({ tone: "error", text: err?.message || "Could not open the print dialog." });
     } finally {
       setPrinting(false);
     }
+  };
+
+  const handleShare = async (kind: ShareKind) => {
+    const outcome = await share.run(kind, `${TYPE_LABEL[type]} ${doc.documentNumber}`);
+    if (outcome === "downloaded") setToast({ tone: "success", text: "Saved to your device." });
+  };
+
+  const statusActions: StatusAction[] = [];
+  if (canMarkUnpaid) {
+    statusActions.push({
+      id: "unpaid",
+      label: "Mark as unpaid",
+      shortLabel: "Mark unpaid",
+      icon: "schedule",
+      onClick: () => setConfirm("unpaid"),
+    });
+  }
+  if (canMarkPaid) {
+    const settling = doc.status === "unpaid";
+    statusActions.push({
+      id: "paid",
+      label: settling ? "Pay remaining balance" : "Mark as paid",
+      shortLabel: settling ? "Pay balance" : "Mark paid",
+      icon: "payments",
+      onClick: () => setConfirm("paid"),
+    });
+  }
+  if (canMarkDelivered) {
+    statusActions.push({
+      id: "delivered",
+      label: "Mark as delivered",
+      shortLabel: "Mark delivered",
+      icon: "local_shipping",
+      onClick: () => setConfirm("delivered"),
+    });
+  }
+
+  const showStock = isSales && doc.status !== "deleted" && doc.status !== "draft";
+  const stockNote = !showStock
+    ? null
+    : doc.stockStatus === "deducted"
+      ? "Every item has been taken out of stock."
+      : doc.stockStatus === "partial"
+        ? "Some items had less stock than invoiced, so only what was available was deducted. Stock can't be deducted again."
+        : doc.stockStatus === "pending" && doc.stockDeductedAt
+          ? "Nothing was in stock when this was marked unpaid. Stock can't be deducted again."
+          : null;
+
+  const actionProps: DocumentActionsProps = {
+    statusActions,
+    slots: share.slots,
+    onShare: handleShare,
+    shareDisabled: !html,
+    onPrint: handlePrint,
+    printing,
+    printDisabled: printing || !html,
+    editHref,
+    editBlocked,
+    paymentsHref: canViewPayments ? invoicePaymentsRoute(doc.id) : null,
+    deduct: showStock
+      ? {
+          canDeduct,
+          loading: loadingId === doc.id,
+          onClick: () => startDeduct(fromDocument(doc)),
+          note: stockNote,
+        }
+      : null,
   };
 
   const markPaid = async () => {
@@ -191,7 +268,7 @@ export default function DocumentDetailPage() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-24 lg:pb-0">
       <PageHeader
         title={doc.documentNumber}
         subtitle={`${TYPE_LABEL[type]} · Issued ${issuedLabel(doc)}`}
@@ -207,76 +284,7 @@ export default function DocumentDetailPage() {
 
         <aside className="space-y-6 xl:sticky xl:top-[94px] xl:self-start">
           <SectionCard title="Actions">
-            <div className="space-y-3">
-              <button type="button" onClick={handlePrint} disabled={printing || !html} className={`${btnNavy} h-11 w-full`}>
-                <Icon name="print" size={18} /> {printing ? "Opening..." : "Print or save as PDF"}
-              </button>
-
-              {canViewPayments && (
-                <Link href={invoicePaymentsRoute(doc.id)} className={`${btnAmber} h-11 w-full`}>
-                  <Icon name="history" size={18} /> View payment history
-                </Link>
-              )}
-
-              {canMarkUnpaid && (
-                <button type="button" onClick={() => setConfirm("unpaid")} className={`${btnAmber} h-11 w-full`}>
-                  <Icon name="schedule" size={18} /> Mark as unpaid
-                </button>
-              )}
-
-              {canMarkPaid && (
-                <button type="button" onClick={() => setConfirm("paid")} className={`${canMarkUnpaid ? btnOutline : btnAmber} h-11 w-full`}>
-                  <Icon name="payments" size={18} /> {doc.status === "unpaid" ? "Pay remaining balance" : "Mark as paid"}
-                </button>
-              )}
-
-              {canMarkDelivered && (
-                <button type="button" onClick={() => setConfirm("delivered")} className={`${btnAmber} h-11 w-full`}>
-                  <Icon name="local_shipping" size={18} /> Mark as delivered
-                </button>
-              )}
-
-              {isSales && doc.status !== "deleted" && doc.status !== "draft" && (
-                <div>
-                  {canDeduct && (
-                    <button
-                      type="button"
-                      onClick={() => startDeduct(fromDocument(doc))}
-                      disabled={loadingId === doc.id}
-                      className={`${btnOutline} h-11 w-full`}
-                    >
-                      <Icon name="inventory_2" size={18} /> {loadingId === doc.id ? "Loading stock..." : "Deduct stock"}
-                    </button>
-                  )}
-                  {doc.stockStatus === "deducted" && (
-                    <p className="text-xs text-on-surface-variant">Every item has been taken out of stock.</p>
-                  )}
-                  {doc.stockStatus === "partial" && (
-                    <p className="text-xs text-on-surface-variant">
-                      Some items had less stock than invoiced, so only what was available was deducted. Stock can't be deducted again.
-                    </p>
-                  )}
-                  {doc.stockStatus === "pending" && doc.stockDeductedAt && (
-                    <p className="text-xs text-on-surface-variant">
-                      Nothing was in stock when this was marked unpaid. Stock can't be deducted again.
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {editBlocked ? (
-                <div>
-                  <button type="button" disabled className={`${btnOutline} h-11 w-full`}>
-                    <Icon name="edit" size={18} /> Edit
-                  </button>
-                  <p className="mt-1.5 text-xs text-on-surface-variant">{editBlocked}</p>
-                </div>
-              ) : (
-                <Link href={editHref} className={`${btnOutline} h-11 w-full`}>
-                  <Icon name="edit" size={18} /> Edit
-                </Link>
-              )}
-            </div>
+            <DocumentActionsCard {...actionProps} />
           </SectionCard>
 
           <DocumentSummary
@@ -334,7 +342,8 @@ export default function DocumentDetailPage() {
       />
 
       {deductOverlay}
-      <Toast toast={toast} onDismiss={dismissToast} />
+      <DocumentActionsBar {...actionProps} />
+      <Toast toast={toast} onDismiss={dismissToast} raised />
     </div>
   );
 }

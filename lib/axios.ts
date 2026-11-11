@@ -70,7 +70,7 @@ export function setMutationHandler(handler: MutationHandler | null) {
 }
 
 // Writes to these areas never change cached business data.
-const NO_REFRESH_PREFIXES = ['/api/users/', '/api/notifications/', '/api/cloudinary/'];
+const NO_REFRESH_PREFIXES = ['/api/users/', '/api/notifications/', '/api/business/cloudinary/', '/api/invoice-file'];
 
 function extractRetryAfterSeconds(error: any): number {
   const fromBody = error.response?.data?.retryAfter;

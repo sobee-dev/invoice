@@ -10,7 +10,7 @@ export interface ToastState {
 }
 
 // onDismiss must keep the same identity between renders, or the timer restarts.
-export function Toast({ toast, onDismiss }: { toast: ToastState | null; onDismiss: () => void }) {
+export function Toast({ toast, onDismiss, raised = false, }: { toast: ToastState | null; onDismiss: () => void; raised?: boolean; }) {
   useEffect(() => {
     if (!toast) return;
     const t = setTimeout(onDismiss, 6000);
@@ -23,9 +23,9 @@ export function Toast({ toast, onDismiss }: { toast: ToastState | null; onDismis
   return (
     <div
       role="status"
-      className={`fixed bottom-6 right-6 z-[60] flex max-w-sm items-start gap-3 rounded-xl border p-4 shadow-lg ${
-        ok ? "border-status-paid-fg/30 bg-status-paid-bg text-status-paid-fg" : "border-error/30 bg-error-container text-error"
-      }`}
+      className={`fixed right-6 z-60 flex max-w-sm items-start gap-3 rounded-xl border p-4 shadow-lg ${
+        raised ? "bottom-24 lg:bottom-6" : "bottom-6"
+      } ${ok ? "border-status-paid-fg/30 bg-status-paid-bg text-status-paid-fg" : "border-error/30 bg-error-container text-error"}`}
     >
       <Icon name={ok ? "check_circle" : "error"} size={20} filled className="mt-0.5" />
       <p className="whitespace-pre-line text-body-md">{toast.text}</p>

@@ -4,7 +4,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 
 import { PWAProvider } from "@/context/PWAContext";
-import Providers from "@/components/Providers";
+
 
 // Body, forms, tables, invoice line items, badges.
 const inter = localFont({
