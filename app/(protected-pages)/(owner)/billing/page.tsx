@@ -44,9 +44,9 @@ function isSafeCheckoutUrl(raw: string): boolean {
   }
 }
 
-const METHOD_OPTIONS: { id: PaymentMethod; title: string; hint: string }[] = [
-  { id: "card", title: "Card", hint: "Renews by itself" },
-  { id: "transfer", title: "Bank transfer or USSD", hint: "Pay once, renew when you choose" },
+const METHOD_OPTIONS: { id: PaymentMethod; title: string; hint: string; icon: string }[] = [
+  { id: "card", title: "Card", hint: "Renews by itself", icon: "credit_card" },
+  { id: "transfer", title: "Bank transfer or USSD", hint: "Pay once, renew when you choose", icon: "account_balance" },
 ];
 
 const COMPARISON_COLUMNS: { tier: "free" | "business" | "enterprise"; name: string }[] = [
@@ -258,24 +258,28 @@ export default function BillingPage() {
           )}
 
           <div id="plans" className="scroll-mt-24">
-            <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <h2 className="text-xl font-bold text-primary">{paidActive ? "Plans" : "Choose a plan"}</h2>
 
               {intervalChoices.length > 1 && (
-                <div className="inline-flex rounded-xl bg-surface-container p-1" role="group" aria-label="Billing period">
+                <div
+                  className="flex w-full gap-1 rounded-xl bg-surface-container p-1 sm:inline-flex sm:w-auto"
+                  role="group"
+                  aria-label="Billing period"
+                >
                   {intervalChoices.map((i) => (
                     <button
                       key={i.interval}
                       type="button"
                       aria-pressed={interval === i.interval}
                       onClick={() => setInterval(i.interval)}
-                      className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+                      className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-lg px-2 py-2 text-center text-xs font-semibold transition-colors sm:flex-none sm:flex-row sm:gap-2 sm:px-4 sm:text-sm ${
                         interval === i.interval ? "bg-white text-primary shadow" : "text-on-surface-variant hover:text-on-surface"
                       }`}
                     >
-                      {i.label}
+                      <span className="truncate">{i.label}</span>
                       {i.discountLabel && (
-                        <span className="ml-2 rounded-full bg-secondary-container px-2 py-0.5 text-[11px] font-bold text-on-secondary-container">
+                        <span className="rounded-full bg-secondary-container px-2 py-0.5 text-[10px] font-bold text-on-secondary-container sm:text-[11px]">
                           {i.discountLabel}
                         </span>
                       )}
@@ -286,24 +290,49 @@ export default function BillingPage() {
             </div>
 
             {canPurchase && (
-              <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Payment method">
-                {METHOD_OPTIONS.map((m) => (
-                  <button
-                    key={m.id}
-                    type="button"
-                    role="radio"
-                    aria-checked={method === m.id}
-                    onClick={() => setMethod(m.id)}
-                    className={`rounded-lg border px-4 py-3 text-left transition-colors ${
-                      method === m.id
-                        ? "border-primary-container bg-white ring-1 ring-primary-container"
-                        : "border-outline-variant bg-white hover:bg-surface-container-low"
-                    }`}
-                  >
-                    <span className="block text-sm font-semibold text-primary">{m.title}</span>
-                    <span className="block text-xs text-on-surface-variant">{m.hint}</span>
-                  </button>
-                ))}
+              <div className="mt-5">
+                <p className="mb-2 text-sm font-semibold text-on-surface-variant">Pay with</p>
+                <div className="grid grid-cols-2 gap-3" role="radiogroup" aria-label="Payment method">
+                  {METHOD_OPTIONS.map((m) => {
+                    const selected = method === m.id;
+                    return (
+                      <button
+                        key={m.id}
+                        type="button"
+                        role="radio"
+                        aria-checked={selected}
+                        onClick={() => setMethod(m.id)}
+                        className={`relative flex flex-col items-start gap-2 rounded-xl border-2 p-3 text-left transition-colors sm:flex-row sm:items-center sm:gap-3 sm:p-4 ${
+                          selected
+                            ? "border-primary-container bg-primary-fixed/40"
+                            : "border-outline-variant bg-white hover:bg-surface-container-low"
+                        }`}
+                      >
+                        <span
+                          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
+                            selected ? "bg-primary-container text-white" : "bg-surface-container text-primary"
+                          }`}
+                        >
+                          <Icon name={m.icon} size={20} />
+                        </span>
+
+                        <span className="min-w-0 flex-1 pr-6 sm:pr-0">
+                          <span className="block text-sm font-bold leading-tight text-primary">{m.title}</span>
+                          <span className="mt-0.5 block text-xs leading-snug text-on-surface-variant">{m.hint}</span>
+                        </span>
+
+                        <span
+                          aria-hidden="true"
+                          className={`absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full border-2 sm:static sm:shrink-0 ${
+                            selected ? "border-primary-container bg-primary-container" : "border-outline-variant bg-white"
+                          }`}
+                        >
+                          {selected && <span className="h-2 w-2 rounded-full bg-white" />}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             )}
 

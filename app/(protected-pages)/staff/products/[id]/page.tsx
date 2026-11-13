@@ -93,8 +93,8 @@ function StaffProductDetail() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div>
-          <div className="flex items-center justify-center rounded-xl border border-outline-variant bg-white p-6 shadow-card">
-            <ProductThumb imageUrl={product.imageUrl} name={product.name} size={240} />
+          <div className="flex items-center justify-center rounded-xl border border-outline-variant bg-white p-4 shadow-card sm:p-6">
+            <ProductThumb imageUrl={product.imageUrl} name={product.name} size={240} mobileSize={140} />
           </div>
         </div>
 

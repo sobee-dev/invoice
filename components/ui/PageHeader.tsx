@@ -21,8 +21,8 @@ export function PageHeader({ title, subtitle, backHref, backLabel = "Back", acti
       )}
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="text-headline-lg font-bold text-primary">{title}</h1>
-          {subtitle && <p className="mt-1 text-body-lg text-on-surface-variant">{subtitle}</p>}
+          <h1 className="break-words text-xl font-bold text-primary sm:text-headline-lg">{title}</h1>
+          {subtitle && <p className="mt-1 text-sm text-on-surface-variant sm:text-body-lg">{subtitle}</p>}
         </div>
         {actions && <div className="flex flex-wrap gap-3">{actions}</div>}
       </div>

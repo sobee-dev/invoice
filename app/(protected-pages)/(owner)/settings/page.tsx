@@ -163,7 +163,7 @@ export default function SettingsPage() {
                 label="Billing and subscription"
                 sub={subscription ? `Plan: ${subscription.planName}` : "Manage your plan"}
               />
-              <LinkRow href="/staff-list" icon="badge" label="Staff" sub="Manage team members and roles" />
+              <LinkRow href="/team" icon="badge" label="Staff" sub="Manage team members and roles" />
               {user?.hasPassword === false ? (
                 <button
                   type="button"
