@@ -4,12 +4,13 @@
 import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AddToInventoryModal } from "@/components/docs/AddToInventoryModal";
 import { DocumentSummary } from "@/components/docs/DocumentSummary";
 import { InvoicePreview } from "@/components/docs/InvoicePreview";
 import { getInvoiceHtml } from "@/components/templates/pdf";
 
+import { RecordPaymentDialog } from "@/components/payments/RecordPaymentDialog";
 import { StockBadge } from "@/components/payments/StockBadge";
 import { Badge, BadgeTone } from "@/components/ui/Badge";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -28,10 +29,12 @@ import { canDeductStock, DocumentType, fromDocument, TYPE_LABEL } from "@/lib/do
 import { printHtml } from "@/lib/printHtml";
 import { invoicePaymentsRoute, ROUTES } from "@/lib/routes";
 import { Document, documentService } from "@/services/documents";
+import { paymentService } from "@/services/payments";
 import { resolveCurrency } from "@/utils/currencySymbol";
 import { getDisplayName } from "@/utils/displayName";
 import { fmtLongDate } from "@/utils/formatDate";
 import { getApiErrorMessage } from "@/utils/getErrorMessage";
+import { toNumber } from "@/utils/paymentFormat";
 
 import { ShareKind, useInvoiceShare } from "@/hooks/useInvoiceShare";
 import { invoiceFileBase } from "@/lib/invoiceFileName";
@@ -67,14 +70,25 @@ export default function DocumentDetailPage() {
   const { start: startDeduct, loadingId, overlay: deductOverlay } = useDeductStock();
 
   const docKey = ["documents", "detail", id] as const;
+  const historyKey = ["payments", "invoice-history", id] as const;
   const { data: doc, state } = useDetailQuery<Document>(docKey, () => documentService.get(id));
 
   const [confirm, setConfirm] = useState<Confirm>(null);
   const [inventoryOpen, setInventoryOpen] = useState(false);
+  const [payOpen, setPayOpen] = useState(false);
   const [printing, setPrinting] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
   const dismissToast = useCallback(() => setToast(null), []);
   const { subscription, isLoading: planLoading } = useSubscriptionContext();
+
+  // The invoice history carries the live balance due and the customer, which the
+  // payment dialog needs. It loads quietly for unpaid documents so the dialog
+  // can open the moment the button is tapped.
+  const { data: history, isLoading: historyLoading } = useQuery({
+    queryKey: historyKey,
+    queryFn: () => paymentService.invoiceHistory(id),
+    enabled: doc?.status === "unpaid",
+  });
 
   // Writes refresh the cache by themselves. This only shows the server's reply
   // straight away, so the page never flashes the old status.
@@ -125,6 +139,11 @@ export default function DocumentDetailPage() {
   const canMarkDelivered = isPurchase && doc.status !== "delivered" && doc.status !== "deleted";
   const canViewPayments = isOwner && isSales && (doc.status === "unpaid" || doc.status === "paid");
 
+  const isSettling = doc.status === "unpaid";
+  const balanceDue = history ? toNumber(history.invoice.balanceDue) : 0;
+  const payCustomerId = history?.invoice.customer ?? null;
+  const payCustomerName = history?.invoice.customerName ?? "";
+
   const willDeduct = doc.stockStatus === "pending" && !doc.stockDeductedAt;
   const canDeduct = canDeductStock(fromDocument(doc));
 
@@ -148,6 +167,14 @@ export default function DocumentDetailPage() {
     if (outcome === "downloaded") setToast({ tone: "success", text: "Saved to your device." });
   };
 
+  const handleRecordPayment = () => {
+    if (historyLoading) return;
+    // A payment needs a customer to be recorded against. Without one, fall back
+    // to settling the whole balance in one go.
+    if (payCustomerId && balanceDue > 0) setPayOpen(true);
+    else setConfirm("paid");
+  };
+
   const statusActions: StatusAction[] = [];
   if (canMarkUnpaid) {
     statusActions.push({
@@ -159,14 +186,23 @@ export default function DocumentDetailPage() {
     });
   }
   if (canMarkPaid) {
-    const settling = doc.status === "unpaid";
-    statusActions.push({
-      id: "paid",
-      label: settling ? "Pay remaining balance" : "Mark as paid",
-      shortLabel: settling ? "Pay balance" : "Mark paid",
-      icon: "payments",
-      onClick: () => setConfirm("paid"),
-    });
+    if (isSettling) {
+      statusActions.push({
+        id: "paid",
+        label: "Record payment",
+        shortLabel: "Record payment",
+        icon: "add_card",
+        onClick: handleRecordPayment,
+      });
+    } else {
+      statusActions.push({
+        id: "paid",
+        label: "Mark as paid",
+        shortLabel: "Mark paid",
+        icon: "payments",
+        onClick: () => setConfirm("paid"),
+      });
+    }
   }
   if (canMarkDelivered) {
     statusActions.push({
@@ -214,6 +250,7 @@ export default function DocumentDetailPage() {
     try {
       const updated = await documentService.markPaid(doc.id);
       patchDoc(updated);
+      queryClient.invalidateQueries({ queryKey: historyKey });
       setToast({ tone: "success", text: "Marked as paid." });
     } catch (err: any) {
       setToast({ tone: "error", text: getApiErrorMessage(err, "Could not mark this document as paid.") });
@@ -226,6 +263,7 @@ export default function DocumentDetailPage() {
     try {
       const updated = await documentService.markUnpaid(doc.id, { deductStock: willDeduct });
       patchDoc(updated);
+      queryClient.invalidateQueries({ queryKey: historyKey });
       setToast({
         tone: "success",
         text:
@@ -297,13 +335,9 @@ export default function DocumentDetailPage() {
 
       <ConfirmDialog
         open={confirm === "paid"}
-        title={doc.status === "unpaid" ? "Pay the remaining balance?" : "Mark this document as paid?"}
-        description={
-          doc.status === "unpaid"
-            ? "This records a payment for the full remaining balance. You can void it later from the payment history."
-            : "This can't be undone from here."
-        }
-        confirmLabel={doc.status === "unpaid" ? "Record payment" : "Mark as paid"}
+        title="Mark this document as paid?"
+        description="This can't be undone from here."
+        confirmLabel="Mark as paid"
         onConfirm={markPaid}
         onClose={() => setConfirm(null)}
       />
@@ -329,6 +363,23 @@ export default function DocumentDetailPage() {
         onConfirm={markDelivered}
         onClose={() => setConfirm(null)}
       />
+
+      {payCustomerId && (
+        <RecordPaymentDialog
+          open={payOpen}
+          onClose={() => setPayOpen(false)}
+          onRecorded={() => {
+            queryClient.invalidateQueries({ queryKey: docKey });
+            queryClient.invalidateQueries({ queryKey: historyKey });
+            setToast({ tone: "success", text: "Payment recorded." });
+          }}
+          customerId={payCustomerId}
+          customerName={payCustomerName}
+          symbol={symbol}
+          maxAmount={balanceDue}
+          invoice={{ id: doc.id, documentNumber: doc.documentNumber, balanceDue }}
+        />
+      )}
 
       <AddToInventoryModal
         open={inventoryOpen}

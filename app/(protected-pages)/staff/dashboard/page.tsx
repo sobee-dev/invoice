@@ -47,7 +47,7 @@ export default function StaffDashboardPage() {
             <span className="font-semibold text-primary">{business?.name || "..."}</span>.
           </p>
         </div>
-        <NewDocumentMenu variant="staff" />
+        <NewDocumentMenu variant="staff" mobileAlign="left" />
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">

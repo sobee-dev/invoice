@@ -62,7 +62,7 @@ export default function StaffDocsPage() {
       icon="description"
       title="No documents yet"
       description="Create your first invoice and it will show up here."
-      action={<NewDocumentMenu variant="staff" />}
+      action={<NewDocumentMenu variant="staff" mobileAlign="center" />}
     />
   );
 
@@ -74,7 +74,9 @@ export default function StaffDocsPage() {
           <p className="mt-1 text-body-lg text-on-surface-variant">The invoices and proformas you have created.</p>
         </div>
 
-        <div className="flex gap-3">
+        {/* On mobile this group wraps onto its own line at the left edge, so the
+            New Document button goes first there and its menu opens rightwards. */}
+        <div className="flex gap-3 max-sm:flex-row-reverse">
           <button
             type="button"
             aria-label="Refresh documents"
@@ -84,7 +86,7 @@ export default function StaffDocsPage() {
           >
             <Icon name="refresh" size={18} className={isLoading ? "animate-spin" : ""} />
           </button>
-          <NewDocumentMenu variant="staff" />
+          <NewDocumentMenu variant="staff" mobileAlign="left" />
         </div>
       </div>
 

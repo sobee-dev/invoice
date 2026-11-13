@@ -19,6 +19,7 @@ import { fmtMoney } from "@/utils/money";
 const LINKS = [
   { href: ROUTES.reportsStock, icon: "inventory", tile: "bg-status-paid-bg text-status-paid-fg", title: "Stock report", sub: "Inventory levels and reorder alerts" },
   { href: ROUTES.reportsCustomers, icon: "groups", tile: "bg-secondary-container text-on-secondary-container", title: "Customer analytics", sub: "Lifetime value, payment trends and balances due" },
+  { href: "/reports/outstanding", icon: "pending_actions", tile: "bg-tertiary-fixed text-on-tertiary-fixed-variant", title: "Outstanding invoices", sub: "Unpaid money, how old it is and who owes the most" },
   { href: ROUTES.docs, icon: "receipt_long", tile: "bg-primary-fixed text-primary-container", title: "All documents", sub: "Browse your complete document history" },
 ] as const;
 
@@ -83,7 +84,7 @@ export default function ReportsPage() {
 
           <section>
             <h2 className="mb-3 text-xl font-bold text-primary">Business insights</h2>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {LINKS.map((l) => (
                 <Link
                   key={l.href}

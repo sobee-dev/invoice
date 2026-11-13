@@ -63,9 +63,10 @@ export default function OwnerDashboardPage() {
           </p>
         </div>
 
-        {/* `zoom` shrinks the button's text, padding and icon together on mobile only */}
+        {/* `zoom` shrinks the button's text, padding and icon together on mobile only.
+            On mobile the button sits at the left edge, so the menu opens rightwards from it. */}
         <div className="flex gap-3 max-sm:[zoom:0.9]">
-          <NewDocumentMenu />
+          <NewDocumentMenu mobileAlign="left" />
         </div>
       </div>
 

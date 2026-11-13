@@ -68,6 +68,11 @@ export function RecordPaymentDialog({
 
   if (!open) return null;
 
+  const clearAllOutstanding = () => {
+    setAmount(maxAmount.toFixed(2));
+    setError("");
+  };
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = amount.trim();
@@ -139,9 +144,20 @@ export function RecordPaymentDialog({
 
         <div className="mt-4 space-y-4 max-sm:mt-3 max-sm:space-y-3">
           <div>
-            <label htmlFor="pay-amount" className={labelClasses}>
-              Amount ({symbol})
-            </label>
+            <div className="mb-1.5 flex items-center justify-between gap-3">
+              <label htmlFor="pay-amount" className={`${labelClasses} !mb-0`}>
+                Amount ({symbol})
+              </label>
+              <button
+                type="button"
+                onClick={clearAllOutstanding}
+                disabled={saving || maxAmount <= 0}
+                className="inline-flex items-center gap-1.5 rounded-full border border-primary-container bg-white px-3 py-1.5 text-xs font-bold text-primary-container shadow-sm transition-colors hover:bg-primary-container hover:text-white active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white disabled:hover:text-primary-container max-sm:px-2.5 max-sm:py-1"
+              >
+                <Icon name="done_all" size={16} mobileSize={14} />
+                Clear all outstanding
+              </button>
+            </div>
             <input
               id="pay-amount"
               inputMode="decimal"

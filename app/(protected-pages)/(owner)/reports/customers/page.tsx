@@ -58,15 +58,19 @@ function PersonRow({
   sub,
   amount,
   amountClass,
+  href,
 }: {
   rank?: number;
   name: string;
   sub?: string;
   amount: string;
   amountClass: string;
+  href?: string;
 }) {
-  return (
-    <li className="flex items-center gap-3 border-b border-outline-variant/60 px-5 py-3 last:border-b-0">
+  const rowClass = "flex items-center gap-3 px-5 py-3";
+
+  const content = (
+    <>
       {rank !== undefined && (
         <span
           className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-extrabold ${
@@ -82,6 +86,19 @@ function PersonRow({
         {sub && <span className="block truncate text-xs text-on-surface-variant">{sub}</span>}
       </span>
       <span className={`text-sm font-bold ${amountClass}`}>{amount}</span>
+      {href && <Icon name="chevron_right" size={18} className="shrink-0 text-on-surface-variant" />}
+    </>
+  );
+
+  return (
+    <li className="border-b border-outline-variant/60 last:border-b-0">
+      {href ? (
+        <Link href={href} className={`${rowClass} transition-colors hover:bg-surface-container-low/60`}>
+          {content}
+        </Link>
+      ) : (
+        <div className={rowClass}>{content}</div>
+      )}
     </li>
   );
 }
@@ -166,17 +183,17 @@ export default function CustomerAnalyticsPage() {
         />
       </div>
 
-      <div className="flex items-center justify-between gap-4 rounded-xl bg-secondary-container p-6">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-on-secondary-container/70">
+      <div className="flex items-center justify-between gap-4 rounded-xl bg-secondary-container p-6 max-sm:gap-3 max-sm:p-4">
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-wider text-on-secondary-container/70 max-sm:text-[10px]">
             Total lifetime revenue
           </p>
-          <p className="mt-1 text-3xl font-extrabold text-on-secondary-container">
+          <p className="mt-1 truncate text-3xl font-extrabold text-on-secondary-container max-sm:text-xl">
             {d ? fmtMoney(d.totalLtv, symbol, 2) : dash}
           </p>
         </div>
-        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-black/10 text-on-secondary-container">
-          <Icon name="groups" size={28} />
+        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-black/10 text-on-secondary-container max-sm:h-10 max-sm:w-10 max-sm:rounded-xl">
+          <Icon name="groups" size={28} mobileSize={20} />
         </span>
       </div>
 
@@ -204,6 +221,7 @@ export default function CustomerAnalyticsPage() {
                       sub={c.email}
                       amount={fmtMoney(c.lifetimeValue, symbol, 2)}
                       amountClass="text-primary-container"
+                      href={`/clients/${c.id}`}
                     />
                   ))}
                 </ul>
@@ -224,6 +242,7 @@ export default function CustomerAnalyticsPage() {
                       sub={c.phone}
                       amount={fmtMoney(c.outstandingBalance, symbol, 2)}
                       amountClass="text-error"
+                      href={`/clients/${c.id}`}
                     />
                   ))}
                 </ul>

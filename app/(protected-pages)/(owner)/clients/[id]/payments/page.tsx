@@ -145,10 +145,10 @@ export default function ClientPaymentsPage() {
         }
       />
 
-      <div className={`rounded-xl p-6 text-white shadow-card ${outstanding > 0 ? "bg-primary-container" : "bg-status-paid-fg"}`}>
-        <p className="text-xs font-semibold uppercase tracking-wider text-white/70">Outstanding</p>
-        <p className="mt-1 text-4xl font-extrabold">{money(outstanding)}</p>
-        <p className="mt-1 text-sm text-white/80">
+      <div className={`rounded-xl p-6 text-white shadow-card max-sm:p-4 ${outstanding > 0 ? "bg-primary-container" : "bg-status-paid-fg"}`}>
+        <p className="text-xs font-semibold uppercase tracking-wider text-white/70 max-sm:text-[10px]">Outstanding</p>
+        <p className="mt-1 text-4xl font-extrabold max-sm:text-2xl">{money(outstanding)}</p>
+        <p className="mt-1 text-sm text-white/80 max-sm:text-xs">
           {invoices.length === 0
             ? "Nothing owed right now."
             : `Across ${invoices.length} unpaid invoice${invoices.length === 1 ? "" : "s"}.`}
@@ -165,17 +165,17 @@ export default function ClientPaymentsPage() {
                 <li key={inv.id}>
                   <Link
                     href={invoicePaymentsRoute(inv.id)}
-                    className="flex items-center gap-3 px-5 py-4 transition-colors hover:bg-surface-container-low/60"
+                    className="flex items-center gap-3 px-5 py-4 transition-colors hover:bg-surface-container-low/60 max-sm:gap-2 max-sm:px-3 max-sm:py-3"
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="font-bold text-on-surface">{inv.documentNumber}</p>
-                      <p className="text-xs text-on-surface-variant">
+                      <p className="font-bold text-on-surface max-sm:text-sm">{inv.documentNumber}</p>
+                      <p className="text-xs text-on-surface-variant max-sm:text-[11px]">
                         {fmtShortDate(inv.documentDate)} · {inv.daysOutstanding} day{inv.daysOutstanding === 1 ? "" : "s"}
                       </p>
                     </div>
                     <StockBadge status={inv.stockStatus} compact />
-                    <p className="text-sm font-extrabold text-error">{money(inv.balanceDue)}</p>
-                    <Icon name="chevron_right" size={18} className="text-on-surface-variant" />
+                    <p className="text-sm font-extrabold text-error max-sm:text-xs">{money(inv.balanceDue)}</p>
+                    <Icon name="chevron_right" size={18} mobileSize={16} className="shrink-0 text-on-surface-variant" />
                   </Link>
                 </li>
               ))}
@@ -189,9 +189,9 @@ export default function ClientPaymentsPage() {
           ) : (
             <ul className="divide-y divide-outline-variant/60">
               {payments.map((p) => (
-                <li key={p.id} className={`px-5 py-4 ${p.voidedAt ? "opacity-55" : ""}`}>
+                <li key={p.id} className={`px-5 py-4 max-sm:px-3 max-sm:py-3 ${p.voidedAt ? "opacity-55" : ""}`}>
                   <div className="flex items-center gap-3">
-                    <p className={`flex-1 text-base font-extrabold text-on-surface ${p.voidedAt ? "line-through" : ""}`}>
+                    <p className={`flex-1 text-base font-extrabold text-on-surface max-sm:text-sm ${p.voidedAt ? "line-through" : ""}`}>
                       {money(p.amount)}
                     </p>
                     {p.voidedAt ? (
@@ -204,13 +204,13 @@ export default function ClientPaymentsPage() {
                           setVoidReason("");
                           setVoidError("");
                         }}
-                        className="text-xs font-bold text-error hover:underline"
+                        className="text-xs font-bold text-error hover:underline max-sm:text-[11px]"
                       >
                         Void
                       </button>
                     ) : null}
                   </div>
-                  <p className="mt-0.5 text-xs text-on-surface-variant">
+                  <p className="mt-0.5 text-xs text-on-surface-variant max-sm:text-[11px]">
                     {PAYMENT_METHOD_LABEL[p.method] ?? p.method} · {fmtShortDate(p.createdAt)}
                     {p.reference ? ` · ${p.reference}` : ""}
                     {p.recordedByName ? ` · ${p.recordedByName}` : ""}
@@ -219,14 +219,14 @@ export default function ClientPaymentsPage() {
                     <Link
                       key={a.id}
                       href={invoicePaymentsRoute(a.document)}
-                      className="mt-1.5 flex justify-between text-xs"
+                      className="mt-1.5 flex justify-between text-xs max-sm:text-[11px]"
                     >
                       <span className="font-semibold text-primary-container hover:underline">{a.documentNumber}</span>
                       <span className="text-on-surface-variant">{money(a.amount)}</span>
                     </Link>
                   ))}
                   {p.voidedAt && p.voidReason && (
-                    <p className="mt-1.5 text-xs italic text-on-surface-variant">Voided: {p.voidReason}</p>
+                    <p className="mt-1.5 text-xs italic text-on-surface-variant max-sm:text-[11px]">Voided: {p.voidReason}</p>
                   )}
                 </li>
               ))}
@@ -266,14 +266,14 @@ export default function ClientPaymentsPage() {
             if (e.target === e.currentTarget && !voiding) setVoidTarget(null);
           }}
         >
-          <form onSubmit={submitVoid} className="w-full max-w-md rounded-xl bg-white p-6 shadow-modal">
-            <h2 id="void-title" className="text-xl font-bold text-error">
+          <form onSubmit={submitVoid} className="w-full max-w-md rounded-xl bg-white p-6 shadow-modal max-sm:max-h-[92vh] max-sm:overflow-y-auto max-sm:p-4">
+            <h2 id="void-title" className="text-xl font-bold text-error max-sm:text-lg">
               Void payment
             </h2>
-            <p className="mt-1 text-sm text-on-surface-variant">
+            <p className="mt-1 text-sm text-on-surface-variant max-sm:text-xs">
               {money(voidTarget.amount)} will be added back to what this client owes. The record stays in the history.
             </p>
-            <div className="mt-4">
+            <div className="mt-4 max-sm:mt-3">
               <label htmlFor="void-reason" className={labelClasses}>
                 Reason
               </label>
@@ -283,15 +283,15 @@ export default function ClientPaymentsPage() {
                 value={voidReason}
                 onChange={(e) => setVoidReason(e.target.value)}
                 maxLength={255}
-                className={`${inputClasses} h-11`}
+                className={`${inputClasses} h-11 max-sm:h-10`}
               />
             </div>
             {voidError && (
-              <p role="alert" className="mt-4 rounded-lg border border-error/30 bg-error-container px-3 py-2 text-sm text-error">
+              <p role="alert" className="mt-4 rounded-lg border border-error/30 bg-error-container px-3 py-2 text-sm text-error max-sm:mt-3 max-sm:text-xs">
                 {voidError}
               </p>
             )}
-            <div className="mt-6 flex justify-end gap-3">
+            <div className="mt-6 flex justify-end gap-3 max-sm:mt-4 max-sm:gap-2">
               <button type="button" onClick={() => setVoidTarget(null)} disabled={voiding} className={btnOutline}>
                 Cancel
               </button>

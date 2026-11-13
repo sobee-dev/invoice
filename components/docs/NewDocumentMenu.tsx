@@ -48,10 +48,26 @@ const STAFF_OPTIONS = [
   },
 ] as const;
 
+type MobileAlign = "left" | "right" | "center";
+
+// From the sm breakpoint upwards the dropdown always lines up with the button's right edge.
+const MOBILE_ALIGN_CLASS: Record<MobileAlign, string> = {
+  right: "right-0",
+  left: "max-sm:left-0 max-sm:right-auto sm:right-0",
+  center: "max-sm:left-1/2 max-sm:right-auto max-sm:-translate-x-1/2 sm:right-0",
+};
+
 interface NewDocumentMenuProps {
   customer?: Pick<Customer, "id" | "fullName" | "phone" | "email">; // pre-fills the new document
   compact?: boolean; // a round plus button for card headers
   variant?: "owner" | "staff";
+  /**
+   * Where the dropdown lines up with the button on mobile.
+   * "right" (default) opens leftwards, for buttons that sit on the right of the screen.
+   * "left" opens rightwards, for buttons that sit on the left of the screen.
+   * "center" centres the menu under the button, for centred buttons such as empty states.
+   */
+  mobileAlign?: MobileAlign;
 }
 
 function withCustomer(href: string, customer: NewDocumentMenuProps["customer"]): string {
@@ -62,7 +78,7 @@ function withCustomer(href: string, customer: NewDocumentMenuProps["customer"]):
   return `${href}?${params.toString()}`;
 }
 
-export function NewDocumentMenu({ customer, compact = false, variant = "owner" }: NewDocumentMenuProps) {
+export function NewDocumentMenu({ customer, compact = false, variant = "owner", mobileAlign = "right" }: NewDocumentMenuProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useDismiss(ref, open, () => setOpen(false));
@@ -70,6 +86,8 @@ export function NewDocumentMenu({ customer, compact = false, variant = "owner" }
   const { subscription, canCreate, showPlanLimit } = useSubscriptionContext();
   const invoicesLocked = !canCreate("invoices");
   const options = variant === "staff" ? STAFF_OPTIONS : OWNER_OPTIONS;
+
+  const alignClass = MOBILE_ALIGN_CLASS[mobileAlign];
 
   const openLimit = () => {
     setOpen(false);
@@ -108,7 +126,7 @@ export function NewDocumentMenu({ customer, compact = false, variant = "owner" }
       {open && (
         <div
           role="menu"
-          className="absolute right-0 z-20 mt-2 w-80 overflow-hidden rounded-xl border border-outline-variant bg-white p-2 shadow-lg max-sm:w-72"
+          className={`absolute ${alignClass} z-20 mt-2 w-80 overflow-hidden rounded-xl border border-outline-variant bg-white p-2 shadow-lg max-sm:w-72`}
         >
           {options.map((option) => {
             const locked = option.countsTowardLimit && invoicesLocked;
